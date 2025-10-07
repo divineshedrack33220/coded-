@@ -182,9 +182,9 @@
 
     <script>
         feather.replace();
-        const GOOGLE_CLIENT_ID = '12239007321-kcvn3r3asgef4ic341tnvbn2bpt8i9qg.apps.googleusercontent.com';
+        const API_URL = 'https://coded-mbkz.onrender.com';
+        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '12239007321-kcvn3r3asgef4ic341tnvbn2bpt8i9qg.apps.googleusercontent.com';
 
-        // Show toast notification
         function showAlert(message, type = 'error') {
             const alertBox = document.getElementById('alert');
             alertBox.classList.remove('hidden');
@@ -201,7 +201,6 @@
             }, 3000);
         }
 
-        // Switch to signup tab
         function switchToSignupTab() {
             document.getElementById('signupTab').classList.add('active');
             document.getElementById('loginTab').classList.remove('active');
@@ -209,7 +208,6 @@
             document.getElementById('loginForm').classList.add('hidden');
         }
 
-        // Tabs
         document.getElementById('loginTab').addEventListener('click', () => {
             document.getElementById('loginTab').classList.add('active');
             document.getElementById('signupTab').classList.remove('active');
@@ -224,7 +222,6 @@
             document.getElementById('loginForm').classList.add('hidden');
         });
 
-        // Helper function to handle redirect after auth
         function handleAuthSuccess(data, isSignup = false) {
             localStorage.setItem('token', data.token);
             const message = isSignup ? 'Sign up successful!' : (data.isNewUser ? 'Google authentication successful!' : 'Login successful!');
@@ -238,7 +235,6 @@
             setTimeout(() => window.location.href = redirectUrl, 1000);
         }
 
-        // Login
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
@@ -246,7 +242,7 @@
             if (!email || !password) return showAlert('Please fill in all fields');
 
             try {
-                const res = await fetch('http://localhost:5000/api/auth/login', {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -258,7 +254,6 @@
             } catch (err) { showAlert(err.message); }
         });
 
-        // Signup
         document.getElementById('signupBtn').addEventListener('click', async () => {
             const email = document.getElementById('signupEmail').value.trim();
             const phone = document.getElementById('signupPhone').value.trim();
@@ -271,7 +266,7 @@
                 return showAlert('Passwords do not match');
 
             try {
-                const res = await fetch('http://localhost:5000/api/auth/signup', {
+                const res = await fetch(`${API_URL}/api/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, phone, password })
@@ -283,10 +278,9 @@
             } catch (err) { showAlert(err.message); }
         });
 
-        // Google Sign-In
         window.handleGoogleSignIn = async (response) => {
             try {
-                const res = await fetch('http://localhost:5000/api/auth/google', {
+                const res = await fetch(`${API_URL}/api/auth/google`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ idToken: response.credential })
@@ -294,7 +288,6 @@
                 const data = await res.json();
                 if (!res.ok) {
                     if (data.error === 'user_not_found') {
-                        // User doesn't exist, prompt to sign up
                         showAlert('Account not found. Please sign up to continue.', 'error');
                         switchToSignupTab();
                         return;
@@ -308,7 +301,6 @@
             }
         };
 
-        // Initialize Google
         window.onload = function() {
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
