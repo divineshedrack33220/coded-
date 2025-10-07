@@ -184,7 +184,8 @@
         feather.replace();
         // Use Render backend URL for production
         const API_URL = 'https://coded-mbkz.onrender.com';
-        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '12239007321-kcvn3r3asgef4ic341tnvbn2bpt8i9qg.apps.googleusercontent.com';
+        // Hardcode Google Client ID to avoid process.env in browser
+        const GOOGLE_CLIENT_ID = '12239007321-kcvn3r3asgef4ic341tnvbn2bpt8i9qg.apps.googleusercontent.com';
 
         // Show toast notification
         function showAlert(message, type = 'error') {
