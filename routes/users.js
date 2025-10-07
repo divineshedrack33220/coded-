@@ -11,7 +11,7 @@ const {
   getAccountDetails,
   upload,
   uploadImages,
-} = require('../controllers/UserController');
+} = require('../controllers/userController');
 const User = require('../models/User');
 
 // ✅ Ensure JSON response only once
