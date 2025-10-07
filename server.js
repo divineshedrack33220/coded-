@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: '*',
+    origin: 'https://coded-mbkz.onrender.com',
     methods: ['GET', 'POST'],
   },
 });
@@ -30,10 +30,10 @@ mongoose
   .then(() => console.log('✅ MongoDB connected'))
   .catch((err) => console.error('❌ MongoDB error:', err));
 
-// Configure multer for file uploads
+// Configure multer for file uploads with Render Disks
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, 'Uploads', file.fieldname === 'image' ? 'images' : 'paymentProofs');
+    const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'Uploads', file.fieldname === 'image' ? 'images' : 'paymentProofs');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -46,7 +46,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: 'https://coded-mbkz.onrender.com' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
@@ -83,14 +83,14 @@ app.post('/api/payments/upload', auth, upload.single('proof'), async (req, res) 
     if ((purpose === 'post_creation' || purpose === 'post_extension') && !postId) {
       return res.status(400).json({ error: 'Post ID required for post-related payments' });
     }
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (postId && !mongoose.Types.ObjectId.isValid(postId)) {
       return res.status(400).json({ error: 'Invalid post ID' });
     }
     const payment = new Payment({
       user: req.user._id,
       post: postId || null,
       purpose,
-      proofPath: req.file.path,
+      proofPath: req.file.path.replace(__dirname, ''),
       amount: parseFloat(amount) || 0,
       reference: `PAYMENT-${Date.now()}`,
     });
@@ -111,7 +111,7 @@ app.post('/api/users/upload', auth, upload.single('image'), async (req, res) => 
       return res.status(400).json({ error: 'No image file uploaded' });
     }
     console.log('Image uploaded:', { filename: req.file.filename, path: req.file.path });
-    res.json({ url: `/Uploads/images/${req.file.filename}` });
+    res.json({ url: `${process.env.UPLOAD_BASE_URL || 'https://coded-mbkz.onrender.com'}/Uploads/images/${req.file.filename}` });
   } catch (error) {
     console.error('Image upload error:', error.message);
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -119,7 +119,7 @@ app.post('/api/users/upload', auth, upload.single('image'), async (req, res) => 
 });
 
 // Serve static files
-app.use('/Uploads', express.static(path.join(__dirname, 'Uploads')));
+app.use('/Uploads', express.static(process.env.UPLOAD_DIR || path.join(__dirname, 'Uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve auth.html for root route
