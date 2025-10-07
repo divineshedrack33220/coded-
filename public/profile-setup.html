@@ -184,7 +184,7 @@
             justify-content: center;
         }
         .footer-container .relative {
-            max-width: 600px; /* Increased from 448px (sm:max-w-md) to make the button wider */
+            max-width: 600px;
             width: 100%;
         }
     </style>
@@ -356,7 +356,7 @@
     </main>
 
     <footer class="px-4 sm:px-6 py-4 border-t border-gray-800 footer-container">
-        <div class="relative max-w-sm sm:max-w-lg mx-auto"> <!-- Adjusted max-width to sm:max-w-lg (previously sm:max-w-md) -->
+        <div class="relative max-w-sm sm:max-w-lg mx-auto">
             <button id="continueBtn" class="btn-gradient w-full py-2.5 sm:py-3 rounded-lg text-white font-medium text-sm sm:text-base disabled:opacity-50" disabled>
                 Continue
             </button>
@@ -369,6 +369,9 @@
 
         // Detect iOS
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        // API URL for Render
+        const API_URL = 'https://coded-mbkz.onrender.com';
 
         // Show toast notification
         function showAlert(message, type = 'error') {
@@ -444,7 +447,7 @@
                 console.log('Avatar file details:', { name: file.name, size: file.size || 'unknown', type: file.type, lastModified: file.lastModified, isIOS });
                 const formData = new FormData();
                 formData.append('image', file);
-                const response = await fetch('/api/users/upload', {
+                const response = await fetch(`${API_URL}/api/users/upload`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
@@ -516,7 +519,7 @@
                     console.log(`Image ${i} file details:`, { name: file.name, size: file.size || 'unknown', type: file.type, lastModified: file.lastModified, isIOS });
                     const formData = new FormData();
                     formData.append('image', file);
-                    const response = await fetch('/api/users/upload', {
+                    const response = await fetch(`${API_URL}/api/users/upload`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` },
                         body: formData
@@ -612,7 +615,7 @@
                     continueBtn.disabled = true;
                     continueLoading.style.display = 'block';
                     console.log('Submitting profile:', formData);
-                    const response = await fetch('/api/users/profile', {
+                    const response = await fetch(`${API_URL}/api/users/profile`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
