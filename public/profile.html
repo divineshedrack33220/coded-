@@ -296,16 +296,16 @@
         <div class="container flex items-center justify-between">
             <h1 class="text-xl font-bold gradient-text">Coded <span class="text-white">Signals</span></h1>
             <div class="hidden lg:flex items-center space-x-6">
-                <a href="home.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                <a href="/home.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
                     <i data-feather="home" class="w-5 h-5 inline mr-1"></i> Home
                 </a>
-                <a href="explore.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                <a href="/explore.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
                     <i data-feather="plus-circle" class="w-5 h-5 inline mr-1"></i> Request
                 </a>
-                <a href="chat.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                <a href="/chat.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
                     <i data-feather="message-square" class="w-5 h-5 inline mr-1"></i> Chat
                 </a>
-                <a href="profile.html" class="nav-item active font-medium text-pink-400" aria-current="page">
+                <a href="/profile.html" class="nav-item active font-medium text-pink-400" aria-current="page">
                     <i data-feather="user" class="w-5 h-5 inline mr-1"></i> Profile
                 </a>
                 <button id="logout-btn-top" class="nav-item font-medium text-gray-400 hover:text-pink-400">
@@ -463,19 +463,19 @@
         </div>
     </main>
     <nav class="bottom-nav fixed bottom-0 left-0 right-0 bg-gray-900/80 border-t border-gray-800 flex justify-around py-3 px-4 lg:hidden backdrop-blur-sm z-30">
-        <a href="home.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+        <a href="/home.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
             <i data-feather="home" class="w-5 h-5 mb-1"></i>
             <span>Home</span>
         </a>
-        <a href="explore.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+        <a href="/explore.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
             <i data-feather="plus-circle" class="w-5 h-5 mb-1"></i>
             <span>Request</span>
         </a>
-        <a href="chat.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+        <a href="/chat.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
             <i data-feather="message-square" class="w-5 h-5 mb-1"></i>
             <span>Chat</span>
         </a>
-        <a href="profile.html" class="nav-item active flex flex-col items-center text-xs text-pink-400" aria-current="page">
+        <a href="/profile.html" class="nav-item active flex flex-col items-center text-xs text-pink-400" aria-current="page">
             <i data-feather="user" class="w-5 h-5 mb-1"></i>
             <span>Profile</span>
         </a>
@@ -485,8 +485,9 @@
         </button>
     </nav>
     <script>
-        feather.replace();
+        const API_URL = 'https://coded-mbkz.onrender.com';
         const defaultAvatar = 'data:image/jpeg;base64,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';
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             if (!toast) {
@@ -504,32 +505,34 @@
                 }, 300);
             }, 3000);
         }
+
         function logout() {
             console.log('Logging out');
             localStorage.removeItem('token');
             showToast('Logged out successfully!');
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = '/login.html';
             }, 1000);
         }
+
         async function fetchProfile() {
             const token = localStorage.getItem('token');
             if (!token) {
                 console.error('No token found in localStorage');
                 showToast('Please log in to view your profile', true);
-                window.location.href = 'login.html';
+                window.location.href = '/login.html';
                 return null;
             }
             try {
                 console.log('Fetching user profile');
-                const response = await fetch('http://localhost:5000/api/users/profile', {
+                const response = await fetch(`${API_URL}/api/users/profile`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.status === 401 || response.status === 403) {
                     console.error('Invalid or expired token');
                     showToast('Session expired. Please log in again.', true);
                     localStorage.removeItem('token');
-                    window.location.href = 'login.html';
+                    window.location.href = '/login.html';
                     return null;
                 }
                 if (!response.ok) {
@@ -545,6 +548,7 @@
                 return null;
             }
         }
+
         function renderProfile(user) {
             const profileAvatar = document.getElementById('profile-avatar');
             const profileFullName = document.getElementById('profile-fullName');
@@ -618,6 +622,7 @@
                 showToast('Error loading form fields', true);
             }
         }
+
         function renderPosts(posts) {
             const profileGrid = document.querySelector('.profile-grid');
             const noPosts = document.querySelector('.no-posts');
@@ -660,6 +665,7 @@
             });
             feather.replace();
         }
+
         async function updateProfile(data) {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -684,7 +690,7 @@
                     }
                 }
                 document.body.classList.add('form-loading');
-                const response = await fetch('http://localhost:5000/api/users/profile', {
+                const response = await fetch(`${API_URL}/api/users/profile`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
@@ -694,7 +700,7 @@
                     console.error('Invalid or expired token');
                     showToast('Session expired. Please log in again.', true);
                     localStorage.removeItem('token');
-                    window.location.href = 'login.html';
+                    window.location.href = '/login.html';
                     return null;
                 }
                 if (!response.ok) {
@@ -714,6 +720,7 @@
                 return null;
             }
         }
+
         function validateForm(data) {
             clearFormErrors();
             let isValid = true;
@@ -762,6 +769,7 @@
             }
             return isValid;
         }
+
         function showFormError(fieldId, message) {
             const input = document.getElementById(fieldId);
             const errorText = document.getElementById(`${fieldId}-error`);
@@ -771,6 +779,7 @@
                 errorText.classList.remove('hidden');
             }
         }
+
         function clearFormErrors() {
             const fields = ['fullName', 'email', 'phone', 'age', 'gender', 'location', 'role', 'bio', 'avatar', 'images'];
             fields.forEach(field => {
@@ -783,6 +792,7 @@
                 }
             });
         }
+
         function handleFormErrors(errors) {
             clearFormErrors();
             errors.forEach(error => {
@@ -797,6 +807,7 @@
                 }
             });
         }
+
         function closeModal() {
             const modal = document.getElementById('update-profile-modal');
             modal.classList.remove('modal-open');
@@ -807,6 +818,7 @@
                 document.getElementById('update-profile-form').reset();
             }, 300);
         }
+
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('DOM loaded, initializing page');
             const body = document.body;
