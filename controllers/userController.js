@@ -1,141 +1,477 @@
-// Avatar upload
-avatarInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-        console.log('No file selected for avatar');
-        return;
-    }
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    if (!validTypes.includes(file.type)) {
-        showAlert('Only JPEG or PNG images are allowed');
-        return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-        showAlert('Avatar image must be less than 5MB');
-        return;
-    }
-    const token = localStorage.getItem('token');
-    if (!token) {
-        showAlert('Please log in to upload images');
-        window.location.href = '/auth.html';
-        return;
-    }
-    try {
-        avatarLoading.style.display = 'block';
-        avatarCameraBtn.disabled = true;
-        uploadBtn.disabled = true;
-        console.log('Avatar file details:', { name: file.name, size: file.size || 'unknown', type: file.type, lastModified: file.lastModified, isIOS });
-        const formData = new FormData();
-        formData.append('avatar', file); // Use 'avatar' field
-        const response = await fetch(`${API_URL}/api/users/upload`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        });
-        const data = await response.json();
-        console.log('Avatar upload response:', { status: response.status, statusText: response.statusText, data });
-        if (!response.ok) {
-            throw new Error(data.error || data.details || `Avatar upload failed with status ${response.status}`);
-        }
-        if (!data.avatarUrl) {
-            throw new Error('No avatar URL returned from upload');
-        }
-        if (!data.avatarUrl.startsWith('https://res.cloudinary.com')) {
-            throw new Error('Invalid Cloudinary URL for avatar');
-        }
-        avatarUrl = data.avatarUrl;
-        avatarPreview.src = data.avatarUrl;
-        avatarPreview.classList.remove('hidden');
-        avatarPlaceholder.classList.add('hidden');
-        showAlert('Avatar uploaded successfully!', 'success');
-    } catch (error) {
-        console.error('Avatar upload error:', { message: error.message, stack: error.stack });
-        showAlert(error.message.includes('Invalid or expired token') ? 'Session expired. Please log in again.' : `Failed to upload avatar: ${error.message}`);
-        if (error.message.includes('Invalid or expired token')) {
-            localStorage.removeItem('token');
-            window.location.href = '/auth.html';
-        }
-    } finally {
-        avatarLoading.style.display = 'none';
-        avatarCameraBtn.disabled = false;
-        uploadBtn.disabled = false;
-    }
-});
+const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types;
+const User = require('../models/User');
+const { uploadUsers } = require('../config/cloudinaryConfig');
 
-// Image uploads
-const imageUrls = Array(5).fill(null);
-const uploadedImageNames = new Set();
-for (let i = 1; i <= 5; i++) {
-    const imageInput = document.getElementById(`imageInput${i}`);
-    const imagePlaceholder = document.getElementById(`imagePlaceholder${i}`);
-    const imageCameraBtn = imageInput.nextElementSibling;
-    const imageLoading = document.getElementById(`imageLoading${i}`);
-    imageCameraBtn.addEventListener('click', () => imageInput.click());
-    imageInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) {
-            console.log(`No file selected for image ${i}`);
-            return;
-        }
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-        if (!validTypes.includes(file.type)) {
-            showAlert(`Only JPEG or PNG images are allowed for image ${i}`);
-            return;
-        }
-        if (uploadedImageNames.has(file.name) || (avatarInput.files[0] && avatarInput.files[0].name === file.name)) {
-            showAlert('This image has already been uploaded');
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            showAlert(`Image ${i} must be less than 5MB`);
-            return;
-        }
-        const token = localStorage.getItem('token');
-        if (!token) {
-            showAlert('Please log in to upload images');
-            window.location.href = '/auth.html';
-            return;
-        }
-        try {
-            imageLoading.style.display = 'block';
-            imageCameraBtn.disabled = true;
-            console.log(`Image ${i} file details:`, { name: file.name, size: file.size || 'unknown', type: file.type, lastModified: file.lastModified, isIOS });
-            const formData = new FormData();
-            formData.append('images', file); // Use 'images' field
-            const response = await fetch(`${API_URL}/api/users/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            const data = await response.json();
-            console.log(`Image ${i} upload response:`, { status: response.status, statusText: response.statusText, data });
-            if (!response.ok) {
-                throw new Error(data.error || data.details || `Image ${i} upload failed with status ${response.status}`);
-            }
-            if (!data.imageUrls || !data.imageUrls[0]) {
-                throw new Error(`No URL returned for image ${i} upload`);
-            }
-            if (!data.imageUrls[0].startsWith('https://res.cloudinary.com')) {
-                throw new Error(`Invalid Cloudinary URL for image ${i}`);
-            }
-            imageUrls[i - 1] = data.imageUrls[0];
-            uploadedImageNames.add(file.name);
-            const img = document.createElement('img');
-            img.src = data.imageUrls[0];
-            img.classList.add('image-preview');
-            imagePlaceholder.innerHTML = '';
-            imagePlaceholder.appendChild(img);
-            showAlert(`Image ${i} uploaded successfully!`, 'success');
-        } catch (error) {
-            console.error(`Image ${i} upload error:`, { message: error.message, stack: error.stack });
-            showAlert(error.message.includes('Invalid or expired token') ? 'Session expired. Please log in again.' : `Failed to upload image ${i}: ${error.message}`);
-            if (error.message.includes('Invalid or expired token')) {
-                localStorage.removeItem('token');
-                window.location.href = '/auth.html';
-            }
-        } finally {
-            imageLoading.style.display = 'none';
-            imageCameraBtn.disabled = false;
-        }
+exports.upload = uploadUsers.fields([
+  { name: 'avatar', maxCount: 1 },
+  { name: 'images', maxCount: 5 },
+  { name: 'image', maxCount: 1 }, // Support frontend's single image upload
+]);
+
+exports.uploadImages = async (req, res) => {
+  try {
+    console.log('Upload images request:', {
+      userId: req.user?._id,
+      files: req.files ? Object.keys(req.files).map(key => ({
+        field: key,
+        originalname: req.files[key][0]?.originalname,
+        mimetype: req.files[key][0]?.mimetype,
+        size: req.files[key][0]?.size
+      })) : 'No files'
     });
-}
+
+    if (!req.files || (!req.files.avatar && !req.files.images && !req.files.image)) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const response = {};
+    // Handle single 'image' field for frontend compatibility
+    if (req.files.image) {
+      const imageUrl = req.files.image[0].path;
+      if (!imageUrl.startsWith('https://res.cloudinary.com')) {
+        return res.status(400).json({ error: 'Invalid Cloudinary URL for image' });
+      }
+      console.log('Processing single image upload:', {
+        originalname: req.files.image[0].originalname,
+        cloudinaryUrl: imageUrl
+      });
+      return res.json({ url: imageUrl }); // Match frontend expectation
+    }
+
+    // Handle 'avatar' and 'images' fields for other flows
+    if (req.files.avatar) {
+      const avatarUrl = req.files.avatar[0].path;
+      if (!avatarUrl.startsWith('https://res.cloudinary.com')) {
+        return res.status(400).json({ error: 'Invalid Cloudinary URL for avatar' });
+      }
+      console.log('Processing avatar upload:', {
+        originalname: req.files.avatar[0].originalname,
+        cloudinaryUrl: avatarUrl
+      });
+      response.avatarUrl = avatarUrl;
+    }
+    if (req.files.images) {
+      const imageUrls = req.files.images.map(file => file.path).filter(url => url.startsWith('https://res.cloudinary.com'));
+      if (imageUrls.length !== req.files.images.length) {
+        return res.status(400).json({ error: 'One or more invalid Cloudinary URLs for images' });
+      }
+      // Check for duplicates within images
+      const uniqueImageUrls = [...new Set(imageUrls)];
+      if (uniqueImageUrls.length !== imageUrls.length) {
+        return res.status(400).json({ error: 'Duplicate images detected' });
+      }
+      console.log('Processing images upload:', req.files.images.map(file => ({
+        originalname: file.originalname,
+        cloudinaryUrl: file.path
+      })));
+      response.imageUrls = uniqueImageUrls;
+    }
+
+    res.json({ url: response.avatarUrl || (response.imageUrls && response.imageUrls[0]), ...response });
+  } catch (error) {
+    console.error('Image upload error:', {
+      message: error.message,
+      stack: error.stack,
+      cloudinaryError: error.http_code ? {
+        http_code: error.http_code,
+        details: error.message
+      } : null
+    });
+    if (error.message.includes('Only JPEG or PNG images are allowed')) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.http_code) {
+      return res.status(400).json({ error: 'Cloudinary upload failed', details: error.message });
+    }
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+exports.createProfile = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    console.log('Create profile request:', req.user._id, req.body, req.files);
+    const { fullName, email, phone, age, gender, location, role, bio, avatar, images } = req.body;
+
+    if (!fullName || !email || !phone || !age || !gender || !location || !role || !bio) {
+      console.error('Missing required fields:', { fullName, email, phone, age, gender, location, role, bio });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'All fields (fullName, email, phone, age, gender, location, role, bio) are required' });
+    }
+
+    const user = await User.findById(req.user._id).session(session);
+    if (!user) {
+      console.error('User not found for ID:', req.user._id);
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const ageNum = parseInt(age);
+    if (isNaN(ageNum) || ageNum < 18 || ageNum > 99) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Age must be a number between 18 and 99' });
+    }
+    if (!['male', 'female', 'other'].includes(gender)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Invalid gender' });
+    }
+    if (!['friends', 'dates', 'companions', 'escort', 'networking'].includes(role)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    if (bio.length > 300) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Bio must be 300 characters or less' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    if (!/^\+?[1-9]\d{1,14}$/.test(phone)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Invalid phone number format' });
+    }
+    if (fullName.trim().length < 2) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Full name must be at least 2 characters long' });
+    }
+
+    user.fullName = fullName.trim();
+    user.email = email.toLowerCase().trim();
+    user.phone = phone;
+    user.age = ageNum;
+    user.gender = gender;
+    user.location = location;
+    user.role = role;
+    user.bio = bio;
+
+    if (req.files && (req.files.avatar || req.files.images)) {
+      if (req.files.avatar) {
+        const avatarUrl = req.files.avatar[0].path;
+        if (!avatarUrl.startsWith('https://res.cloudinary.com')) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'Invalid Cloudinary URL for avatar' });
+        }
+        user.avatar = avatarUrl;
+      }
+      if (req.files.images) {
+        const imageUrls = req.files.images.map(file => file.path).filter(url => url.startsWith('https://res.cloudinary.com'));
+        if (imageUrls.length !== req.files.images.length) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'One or more invalid Cloudinary URLs for images' });
+        }
+        if (imageUrls.length > 5) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'Maximum 5 images allowed' });
+        }
+        if (user.avatar && imageUrls.includes(user.avatar)) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'Avatar cannot be the same as any additional image' });
+        }
+        user.images = imageUrls;
+      } else {
+        user.images = [];
+      }
+    } else if (req.body.avatar || req.body.images) {
+      if (req.body.avatar) {
+        if (!req.body.avatar.startsWith('https://res.cloudinary.com')) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'Invalid Cloudinary URL for avatar' });
+        }
+        user.avatar = req.body.avatar;
+      }
+      if (req.body.images) {
+        const parsedImages = Array.isArray(req.body.images) ? req.body.images : JSON.parse(req.body.images || '[]');
+        if (parsedImages.length > 5) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'Maximum 5 images allowed' });
+        }
+        if (!parsedImages.every(url => url.startsWith('https://res.cloudinary.com'))) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'One or more invalid Cloudinary URLs for images' });
+        }
+        if (user.avatar && parsedImages.includes(user.avatar)) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ error: 'Avatar cannot be the same as any additional image' });
+        }
+        user.images = parsedImages;
+      } else {
+        user.images = [];
+      }
+    } else {
+      user.avatar = user.avatar || null;
+      user.images = [];
+    }
+
+    await user.save({ validateBeforeSave: true, session });
+    await session.commitTransaction();
+    session.endSession();
+    console.log('Profile created for user:', req.user._id, { fullName: user.fullName, email: user.email });
+    res.json({
+      message: 'Profile created successfully',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        age: user.age,
+        gender: user.gender,
+        location: user.location,
+        role: user.role,
+        bio: user.bio,
+        avatar: user.avatar,
+        images: user.images,
+        verified: user.verified,
+        connections: user.connections || [],
+        posts: user.posts || [],
+        rating: user.rating || { average: 0, count: 0 },
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Create profile error:', error.message, error.stack);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({ error: `${field.charAt(0).toUpperCase() + field.slice(1)} already in use` });
+    }
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    console.log('Update profile request:', req.user._id, req.body, req.files);
+    const { fullName, email, phone, age, gender, location, role, bio, avatar, images } = req.body;
+
+    const user = await User.findById(req.user._id).session(session);
+    if (!user) {
+      console.error('User not found for ID:', req.user._id);
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updatedFields = {};
+
+    if (fullName) {
+      if (fullName.trim().length < 2) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Full name must be at least 2 characters long' });
+      }
+      user.fullName = fullName.trim();
+      updatedFields.fullName = fullName.trim();
+    }
+    if (email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      const existingUser = await User.findOne({ email, _id: { $ne: req.user._id } }).session(session);
+      if (existingUser) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Email already in use' });
+      }
+      user.email = email.toLowerCase().trim();
+      updatedFields.email = email.toLowerCase().trim();
+    }
+    if (phone) {
+      if (!/^\+?[1-9]\d{1,14}$/.test(phone)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Invalid phone number format' });
+      }
+      const existingUser = await User.findOne({ phone, _id: { $ne: req.user._id } }).session(session);
+      if (existingUser) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Phone number already in use' });
+      }
+      user.phone = phone;
+      updatedFields.phone = phone;
+    }
+    if (age) {
+      const ageNum = parseInt(age);
+      if (isNaN(ageNum) || ageNum < 18 || ageNum > 99) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Age must be a number between 18 and 99' });
+      }
+      user.age = ageNum;
+      updatedFields.age = ageNum;
+    }
+    if (gender) {
+      if (!['male', 'female', 'other'].includes(gender)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Invalid gender' });
+      }
+      user.gende
+r = gender;
+      updatedFields.gender = gender;
+    }
+    if (location) {
+      user.location = location;
+      updatedFields.location = location;
+    }
+    if (role) {
+      if (!['friends', 'dates', 'companions', 'escort', 'networking'].includes(role)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Invalid role' });
+      }
+      user.role = role;
+      updatedFields.role = role;
+    }
+    if (bio) {
+      if (bio.length > 300) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Bio must be 300 characters or less' });
+      }
+      user.bio = bio;
+      updatedFields.bio = bio;
+    }
+    if (avatar && !req.files?.avatar) {
+      if (!avatar.startsWith('https://res.cloudinary.com')) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Invalid Cloudinary URL for avatar' });
+      }
+      user.avatar = avatar;
+      updatedFields.avatar = avatar;
+    }
+    if (images) {
+      const parsedImages = Array.isArray(images) ? images : JSON.parse(images || '[]');
+      if (parsedImages.length > 5) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Maximum 5 images allowed' });
+      }
+      if (!parsedImages.every(url => url.startsWith('https://res.cloudinary.com'))) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'One or more invalid Cloudinary URLs for images' });
+      }
+      const uniqueImages = [...new Set(parsedImages)];
+      if (uniqueImages.length !== parsedImages.length) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Duplicate images detected' });
+      }
+      if (user.avatar && parsedImages.includes(user.avatar)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Avatar cannot be the same as any additional image' });
+      }
+      user.images = parsedImages;
+      updatedFields.images = parsedImages;
+    }
+    if (req.files?.avatar) {
+      const avatarUrl = req.files.avatar[0].path;
+      if (!avatarUrl.startsWith('https://res.cloudinary.com')) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Invalid Cloudinary URL for avatar' });
+      }
+      user.avatar = avatarUrl;
+      updatedFields.avatar = avatarUrl;
+    }
+    if (req.files?.images) {
+      const imageUrls = req.files.images.map(file => file.path).filter(url => url.startsWith('https://res.cloudinary.com'));
+      if (imageUrls.length !== req.files.images.length) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'One or more invalid Cloudinary URLs for images' });
+      }
+      if (imageUrls.length > 5) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Maximum 5 images allowed' });
+      }
+      if (user.avatar && imageUrls.includes(user.avatar)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: 'Avatar cannot be the same as any additional image' });
+      }
+      user.images = imageUrls;
+      updatedFields.images = imageUrls;
+    }
+
+    if (Object.keys(updatedFields).length === 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'No valid fields provided for update' });
+    }
+
+    await user.save({ validateBeforeSave: true, session });
+    await session.commitTransaction();
+    session.endSession();
+    console.log('Profile updated for user:', req.user._id, 'Updated fields:', updatedFields);
+
+    const updatedUser = await User.findById(req.user._id).populate({
+      path: 'posts',
+      populate: { path: 'user', select: 'fullName avatar' },
+    });
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser._id,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        age: updatedUser.age,
+        gender: updatedUser.gender,
+        location: updatedUser.location,
+        role: updatedUser.role,
+        bio: updatedUser.bio,
+        avatar: updatedUser.avatar,
+        images: updatedUser.images || [],
+        verified: updatedUser.verified,
+        connections: updatedUser.connections || [],
+        posts: updatedUser.posts || [],
+        rating: updatedUser.rating || { average: 0, count: 0 },
+        createdAt: updatedUser.createdAt,
+      },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Update profile error:', error.message, error.stack);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({ error: `${field.charAt(0).toUpperCase() + field.slice(1)} already in use` });
+    }
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: 'Validation failed', details: errors });
+    }
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
