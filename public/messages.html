@@ -424,6 +424,27 @@
         .input-bar .flex-1.relative .absolute {
             right: 10px;
         }
+
+        .new-chat-button {
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .new-chat-button i {
+            color: white;
+            width: 20px;
+            height: 20px;
+        }
+
+        .new-chat-button:hover i {
+            color: white;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -439,9 +460,14 @@
                     <p id="typing-indicator" class="text-sm text-gray-400 typing-indicator truncate"></p>
                 </div>
             </div>
-            <button class="p-2 hover:bg-gray-700 rounded-full" aria-label="More options">
-                <i data-feather="more-vertical" class="w-5 h-5"></i>
-            </button>
+            <div class="flex items-center gap-2">
+                <button class="new-chat-button" data-modal-toggle="new-chat-modal" aria-label="Start new chat">
+                    <i data-feather="plus" class="w-5 h-5"></i>
+                </button>
+                <button class="p-2 hover:bg-gray-700 rounded-full" aria-label="More options">
+                    <i data-feather="more-vertical" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -529,9 +555,10 @@
     </main>
 
     <script>
+        const API_URL = 'https://coded-mbkz.onrender.com';
         const defaultProfileImage = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAHBhAPBw4PDxUPEA8VEBgQDw8QDg8PFRMWFhcRFRMYHSgiGBolHRUVITEhJSktLi4uFx8zODcsNygtLisBCgoKDQ0NFQ0NFSsZFRkrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrK//AABEIAOEA4QMBIgACEQEDEQH/xAAaAAEAAwEBAQAAAAAAAAAAAAAAAQQFAgMH/8QAMRABAAEDAQMKBgIDAAAAAAAAAAECAxEEIUGBBRIiMTJhcZGhsRMzQlFy0SM0U8Hx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAH/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwD6oAqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPK7qKbXanb9o6weozrmtqq7ERHrLym/XPXVPngGsMj4tUfVV5y7p1NdP1Tx2g1BRo10/XTHCcLtMxVGadvh1AkAAAAAAAAAAAAAAAAAAABFUxTGatmEqGvudKKY3bZ8QRqdXNc4t7I9ZVQUAAAAHdq7NmrNE/qXADWs3YvUZjjH2ejM0VfNvxH32NNAAAAAAAAAAAAAAAAAAAY92v4lyZnfPo1L84s1fjLJAAUAAAAAATRVza4mN0w2WK2YnMIJAAAAAAAAAAAAAAAAAB5an+vV+Mspr3ozaqjun2ZAACgAAAAAA1rE5s0/jHsyWvZjFmn8afZB2AAAAAAAAAAAAAAAAACtrbk27ccycZlnNDlCP4Y/KPaWeAAoAAAAAANHQ3JuUTz5zidnkzmhyfH8Mz3/wCoQWgAAAAAAAAAAAAAAAAAeOqp52nq8M+TLbMxmMTvZuq0/wADHNnOcg8AFAAAAAABqaSnm6envjPmpabT/HzmcYxxaVMc2mIjcgkAAAAAAAAAAAAAAAAABW11HOsZjdMTw6llFUc6MTvBjD0v2ptXMTw74eagAAAADuzb+LciI490Av6KjmWI79qwiIxGxKAAAAAAAAAAAAAAAAAAAACnyjHQpnvn2UV3lGejTHfMqSgAAAAt8ndurwj3VFrk6cXZj7x7SDQAQAAAAAAAAAAAAAAAAARMxTGapx4glTv63E4tRxn9F7WxGy1t756lGZzOZ3g6rrm5Oa5y5BQAAAATTVNFWaZwgBcs63Gy7Ge+P0uxOY2MZcs63Gy7HGP0gvDmiuK4zRMT4OgAAAAAAAAAABxduRapzXOPeVK5rpn5cY9ZBoPK5fpt9qqOG2WbXdqr7VUzx2eTgFy5rv8AHHn+lWu5NyenMy5AAAAFAAAAAAABBNNc0TmmZjwWreumPmRnj2SqANS3qaK+qceOx7MV1TcmjszMcQbAzretqp7fS9JXbN6m9HRnhvgHoAAAA4u3It0TNW71dqPKNW2mOIKt25N2vNf/AByCgAAAAAAAAAAAAAAAAAAAAmiqaKs0ziYQA1dPd+Nbzv3+L1Z2gqxex949YaKAAAz+UPmx4R7yAKoCgAAAAAAAAAAAAAAAAAAAAAD30X9iOPtLTBAAB//Z';
 
-        const socket = io();
+        const socket = io(API_URL);
         const token = localStorage.getItem('token');
         let currentUserId = null;
 
@@ -557,7 +584,7 @@
             localStorage.removeItem('token');
             console.error('No token found, redirecting to login');
             showToast('Please log in to view conversations', true);
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         } else {
             try {
                 const parts = token.split('.');
@@ -575,7 +602,7 @@
                 console.error('Error parsing token:', error.message);
                 localStorage.removeItem('token');
                 showToast('Invalid token. Please log in again.', true);
-                window.location.href = '/login';
+                window.location.href = '/login.html';
             }
         }
 
@@ -647,7 +674,7 @@
         async function fetchMessages(chatId) {
             console.log(`Fetching messages for chat: ${chatId}`);
             try {
-                const response = await fetch(`/api/chats/${chatId}/messages`, {
+                const response = await fetch(`${API_URL}/api/chats/${chatId}/messages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!response.ok) {
@@ -665,7 +692,7 @@
         async function fetchPostContent(postId) {
             if (!postId) return '';
             try {
-                const response = await fetch(`/api/posts/${postId}`, {
+                const response = await fetch(`${API_URL}/api/posts/${postId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const post = await response.json();
@@ -682,7 +709,7 @@
 
         async function fetchChatById(chatId) {
             try {
-                const response = await fetch(`/api/chats/${chatId}`, {
+                const response = await fetch(`${API_URL}/api/chats/${chatId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const chat = await response.json();
@@ -776,9 +803,11 @@
                 dom.noProfileImage.classList.toggle('hidden', !!chat.recipient.profilePicture);
             }
             dom.headerTitle.textContent = chat.recipient.name;
-            dom.typingIndicator.textContent = chat.recipient.isOnline ? 'Online' : `Last seen ${formatRelativeTime(chat.recipient.lastSeen || new Date())}`;
+            dom.typingIndicator.dataset.userId = chat.recipient._id;
             dom.typingIndicator.dataset.isOnline = chat.recipient.isOnline;
-
+            dom.typingIndicator.dataset.lastSeen = chat.recipient.lastSeen || new Date().toISOString();
+            dom.typingIndicator.textContent = chat.recipient.isOnline ? 'Online' : `Last seen ${formatRelativeTime(chat.recipient.lastSeen || new Date())}`;
+            
             dom.messagesLoading.classList.remove('hidden');
             const data = await fetchMessages(chat._id);
             await renderMessages(data, chat.recipient.name);
@@ -900,7 +929,7 @@
                     return;
                 }
                 try {
-                    const response = await fetch(`/api/chats/${chatId}/messages`, {
+                    const response = await fetch(`${API_URL}/api/chats/${chatId}/messages`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
