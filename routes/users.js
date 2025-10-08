@@ -11,16 +11,16 @@ const {
   getAccountDetails,
   upload,
   uploadImages,
-} = require('../controllers/userController');
+} = require('../controllers/userController'); // Fixed typo: serController -> userController
 const User = require('../models/User');
 
-// ✅ Ensure JSON response only once
+// Ensure JSON response only once
 router.use(express.json());
 
-// ✅ Upload images route
+// Upload images route
 router.post('/uploadImages', auth, upload, uploadImages);
 
-// ✅ Profile routes
+// Profile routes
 router.post('/profile', auth, createProfile);
 router.put('/profile', auth, updateProfile);
 router.get('/profile', auth, getProfile);
@@ -28,7 +28,7 @@ router.get('/current', auth, getCurrentUser);
 router.get('/account-details', auth, getAccountDetails);
 router.get('/nearby', auth, getNearbyUsers);
 
-// ✅ Get user profile by ID
+// Get user profile by ID
 router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
@@ -64,7 +64,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// ✅ Rate a user
+// Rate a user
 router.post('/:id/rate', auth, async (req, res) => {
   try {
     const { rating } = req.body;
