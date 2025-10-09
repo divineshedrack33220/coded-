@@ -183,7 +183,7 @@
     <script>
         feather.replace();
         const GOOGLE_CLIENT_ID = '12239007321-kcvn3r3asgef4ic341tnvbn2bpt8i9qg.apps.googleusercontent.com';
-        const API_BASE_URL = 'https://coded-mbkz.onrender.com/api/auth';
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000/api/auth' : 'https://coded-mbkz.onrender.com/api/auth';
 
         // Show toast notification
         function showAlert(message, type = 'error') {
@@ -226,16 +226,12 @@
         });
 
         // Helper function to handle redirect after auth
-        function handleAuthSuccess(data, isSignup = false) {
+        function handleAuthSuccess(data) {
             localStorage.setItem('token', data.token);
-            const message = isSignup ? 'Sign up successful! Please complete your profile.' : (data.isNewUser ? 'Google authentication successful! Please complete your profile.' : 'Login successful!');
+            const message = data.isNewUser ? 'Authentication successful! Please complete your profile.' : 'Login successful!';
             showAlert(message, 'success');
             
-            let redirectUrl = '/home.html';
-            if (isSignup || data.isNewUser) {
-                redirectUrl = '/profile-setup.html';
-            }
-            
+            const redirectUrl = data.isNewUser ? '/profile-setup.html' : '/home.html';
             setTimeout(() => window.location.href = redirectUrl, 1000);
         }
 
@@ -253,9 +249,17 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Login failed');
+                if (!res.ok) {
+                    if (data.error === 'Invalid credentials') {
+                        showAlert('No account found. Please sign up or try Google Sign-In.', 'error');
+                        setTimeout(switchToSignupTab, 1000);
+                    } else {
+                        throw new Error(data.error || 'Login failed');
+                    }
+                    return;
+                }
 
-                handleAuthSuccess(data, false);
+                handleAuthSuccess(data);
             } catch (err) {
                 showAlert(err.message);
             }
@@ -282,7 +286,7 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Signup failed');
 
-                handleAuthSuccess(data, true);
+                handleAuthSuccess(data);
             } catch (err) {
                 showAlert(err.message);
             }
@@ -300,7 +304,7 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Google Sign-In failed');
 
-                handleAuthSuccess(data, false);
+                handleAuthSuccess(data);
             } catch (err) {
                 console.error('Google Sign-In error:', err);
                 showAlert('Google Sign-In failed. Please try again.');
