@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: 'https://coded-mbkz.onrender.com',
+    origin: ['https://coded-mbkz.onrender.com', 'http://localhost:5000'],
     methods: ['GET', 'POST'],
   },
 });
@@ -46,7 +46,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Middleware
-app.use(cors({ origin: 'https://coded-mbkz.onrender.com' }));
+app.use(cors({ origin: ['https://coded-mbkz.onrender.com', 'http://localhost:5000'] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
