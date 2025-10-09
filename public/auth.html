@@ -227,7 +227,7 @@
         // Helper function to handle redirect after auth
         function handleAuthSuccess(data, isSignup = false) {
             localStorage.setItem('token', data.token);
-            const message = isSignup ? 'Sign up successful!' : (data.isNewUser ? 'Google authentication successful! Please complete your profile.' : 'Login successful!');
+            const message = isSignup ? 'Sign up successful! Please complete your profile.' : (data.isNewUser ? 'Google authentication successful! Please complete your profile.' : 'Login successful!');
             showAlert(message, 'success');
             
             let redirectUrl = '/home.html';
@@ -285,6 +285,7 @@
 
         // Google Sign-In
         window.handleGoogleSignIn = async (response) => {
+            console.log('Google Sign-In response:', response);
             try {
                 const res = await fetch('http://localhost:5000/api/auth/google', {
                     method: 'POST',
@@ -296,7 +297,8 @@
 
                 handleAuthSuccess(data, false);
             } catch (err) {
-                showAlert(err.message);
+                console.error('Google Sign-In error:', err);
+                showAlert('Google Sign-In failed. Please try again.');
             }
         };
 
@@ -307,8 +309,11 @@
                 callback: window.handleGoogleSignIn
             });
             google.accounts.id.renderButton(document.getElementById('googleBtn'), {
-                theme: 'outline', size: 'large', text: 'continue_with'
+                theme: 'outline',
+                size: 'large',
+                text: 'continue_with'
             });
+            console.log('Google Sign-In initialized');
         };
     </script>
 </body>
