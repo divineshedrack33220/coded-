@@ -182,9 +182,6 @@
 
     <script>
         feather.replace();
-        // Use Render backend URL for production
-        const API_URL = 'https://coded-mbkz.onrender.com';
-        // Hardcode Google Client ID to avoid process.env in browser
         const GOOGLE_CLIENT_ID = '12239007321-kcvn3r3asgef4ic341tnvbn2bpt8i9qg.apps.googleusercontent.com';
 
         // Show toast notification
@@ -230,7 +227,7 @@
         // Helper function to handle redirect after auth
         function handleAuthSuccess(data, isSignup = false) {
             localStorage.setItem('token', data.token);
-            const message = isSignup ? 'Sign up successful!' : (data.isNewUser ? 'Google authentication successful!' : 'Login successful!');
+            const message = isSignup ? 'Sign up successful!' : (data.isNewUser ? 'Google authentication successful! Please complete your profile.' : 'Login successful!');
             showAlert(message, 'success');
             
             let redirectUrl = '/home.html';
@@ -249,7 +246,7 @@
             if (!email || !password) return showAlert('Please fill in all fields');
 
             try {
-                const res = await fetch(`${API_URL}/api/auth/login`, {
+                const res = await fetch('http://localhost:5000/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -274,7 +271,7 @@
                 return showAlert('Passwords do not match');
 
             try {
-                const res = await fetch(`${API_URL}/api/auth/signup`, {
+                const res = await fetch('http://localhost:5000/api/auth/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, phone, password })
@@ -289,20 +286,13 @@
         // Google Sign-In
         window.handleGoogleSignIn = async (response) => {
             try {
-                const res = await fetch(`${API_URL}/api/auth/google`, {
+                const res = await fetch('http://localhost:5000/api/auth/google', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ idToken: response.credential })
                 });
                 const data = await res.json();
-                if (!res.ok) {
-                    if (data.error === 'user_not_found') {
-                        showAlert('Account not found. Please sign up to continue.', 'error');
-                        switchToSignupTab();
-                        return;
-                    }
-                    throw new Error(data.error || 'Google Sign-In failed');
-                }
+                if (!res.ok) throw new Error(data.error || 'Google Sign-In failed');
 
                 handleAuthSuccess(data, false);
             } catch (err) {
@@ -314,7 +304,7 @@
         window.onload = function() {
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
-                callback: handleGoogleSignIn
+                callback: window.handleGoogleSignIn
             });
             google.accounts.id.renderButton(document.getElementById('googleBtn'), {
                 theme: 'outline', size: 'large', text: 'continue_with'
