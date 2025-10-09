@@ -18,7 +18,7 @@ const User = require('../models/User');
 router.use(express.json());
 
 // Upload images route
-router.post('/uploadImages', auth, upload, uploadImages);
+router.post('/upload', auth, upload, uploadImages); // Changed from /uploadImages to /upload
 
 // Profile routes
 router.post('/profile', auth, createProfile);
