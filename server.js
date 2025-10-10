@@ -129,9 +129,9 @@ app.post('/api/users/upload', auth, upload.single('image'), async (req, res) => 
 app.use('/Uploads', express.static(process.env.UPLOAD_DIR || path.join(__dirname, 'Uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve auth.html for root route
+// Serve index.html for root route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'auth.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Catch-all route
