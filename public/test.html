@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PinkChat Messenger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF4DA6;
+            --secondary: #FF77C6;
+            --bg-dark: #1F2937;
+            --bg-darker: #111827;
+            --text-light: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --border-light: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overscroll-behavior-y: none;
+            touch-action: manipulation;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .message-bubble {
+            max-width: 75%;
+            word-wrap: break-word;
+            border-radius: 18px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            position: relative;
+            line-height: 1.4;
+        }
+        
+        .message-bubble.sent {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-top-right-radius: 4px;
+            align-self: flex-end;
+        }
+        
+        .message-bubble.received {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-top-left-radius: 4px;
+            align-self: flex-start;
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+        
+        .message-timestamp {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        .chat-list-item {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .chat-list-item:hover, .chat-list-item.active {
+            background-color: rgba(255, 77, 166, 0.05);
+            border-left-color: var(--primary);
+        }
+        
+        .message-input {
+            resize: none;
+            max-height: 120px;
+            line-height: 1.4;
+            border-radius: 20px;
+            padding: 12px 16px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-send {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .btn-send:active {
+            transform: scale(0.95);
+        }
+        
+        .unread-badge {
+            background: var(--primary);
+            border-radius: 10px;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: var(--border-light);
+            position: relative;
+        }
+        
+        .divider-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--bg-dark);
+            padding: 0 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        @media (max-width: 768px) {
+            .chat-list {
+                transform: translateX(0);
+                transition: transform 0.3s ease;
+            }
+            
+            .chat-list.hidden {
+                transform: translateX(-100%);
+            }
+            
+            .chat-view {
+                transform: translateX(100%);
+            }
+            
+            .chat-view.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="bg-gray-900 py-3 px-4 border-b border-gray-800 sticky top-0 z-10">
+        <div class="flex items-center justify-between">
+            <button id="back-button" class="p-2 rounded-full hover:bg-gray-800 md:hidden">
+                <i data-feather="arrow-left" class="w-5 h-5 text-gray-400"></i>
+            </button>
+            <h1 class="text-xl font-semibold gradient-text">PinkChat</h1>
+            <div class="flex items-center space-x-2">
+                <button class="p-2 rounded-full hover:bg-gray-800">
+                    <i data-feather="search" class="w-5 h-5 text-gray-400"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-gray-800">
+                    <i data-feather="more-vertical" class="w-5 h-5 text-gray-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex flex-1 overflow-hidden">
+        <!-- Chat List -->
+        <div id="chat-list" class="chat-list w-full md:w-80 bg-gray-900 border-r border-gray-800 overflow-y-auto">
+            <!-- Search -->
+            <div class="p-3">
+                <div class="relative">
+                    <input type="text" placeholder="Search messages" class="w-full bg-gray-800 rounded-lg py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-pink-500">
+                    <i data-feather="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-500"></i>
+                </div>
+            </div>
+            
+            <!-- Chat Items -->
+            <div class="space-y-1 px-2 pb-3">
+                <!-- Active Chat -->
+                <div class="chat-list-item active flex items-center p-3 rounded-lg cursor-pointer">
+                    <div class="relative mr-3">
+                        <img src="http://static.photos/people/200x200/1" alt="Profile" class="w-12 h-12 rounded-full object-cover">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-sm truncate">Alex Johnson</h3>
+                            <span class="text-xs text-gray-500">10:30 AM</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-gray-400 truncate">Hey, how's the project going?</p>
+                            <div class="unread-badge text-white">3</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Other Chats -->
+                <div class="chat-list-item flex items-center p-3 rounded-lg cursor-pointer">
+                    <div class="relative mr-3">
+                        <img src="http://static.photos/people/200x200/2" alt="Profile" class="w-12 h-12 rounded-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-sm truncate">Sarah Miller</h3>
+                            <span class="text-xs text-gray-500">Yesterday</span>
+                        </div>
+                        <p class="text-sm text-gray-400 truncate">Let's meet tomorrow at 2pm</p>
+                    </div>
+                </div>
+                
+                <div class="chat-list-item flex items-center p-3 rounded-lg cursor-pointer">
+                    <div class="relative mr-3">
+                        <img src="http://static.photos/people/200x200/3" alt="Profile" class="w-12 h-12 rounded-full object-cover">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-sm truncate">Tech Group</h3>
+                            <span class="text-xs text-gray-500">Mon</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <p class="text-sm text-gray-400 truncate">Mike: Check out this new framework</p>
+                            <div class="unread-badge text-white">12</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-list-item flex items-center p-3 rounded-lg cursor-pointer">
+                    <div class="relative mr-3">
+                        <img src="http://static.photos/people/200x200/4" alt="Profile" class="w-12 h-12 rounded-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-sm truncate">David Wilson</h3>
+                            <span class="text-xs text-gray-500">Apr 20</span>
+                        </div>
+                        <p class="text-sm text-gray-400 truncate">The documents are ready</p>
+                    </div>
+                </div>
+                
+                <div class="chat-list-item flex items-center p-3 rounded-lg cursor-pointer">
+                    <div class="relative mr-3">
+                        <img src="http://static.photos/people/200x200/5" alt="Profile" class="w-12 h-12 rounded-full object-cover">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold text-sm truncate">Emma Thompson</h3>
+                            <span class="text-xs text-gray-500">Apr 18</span>
+                        </div>
+                        <p class="text-sm text-gray-400 truncate">Thanks for your help!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat View -->
+        <div id="chat-view" class="chat-view flex-1 flex flex-col bg-gray-800">
+            <!-- Chat Header -->
+            <div class="bg-gray-900 py-3 px
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Update your profile on Coded Signals">
+    <title>Coded Signals - Profile Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #FF4DA6, #FF77C6);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #FF77C6, #FF4DA6);
+        }
+
+        /* Profile card */
+        .profile-card {
+            transition: all 0.3s ease;
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 77, 166, 0.2);
+        }
+
+        /* Gradient button */
+        .btn-gradient {
+            background: linear-gradient(to right, #FF4DA6, #FF77C6);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 77, 166, 0.3);
+        }
+
+        /* Input fields */
+        .input-field {
+            width: 100%;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            background: #374151;
+            color: #f3f4f6;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #FF4DA6;
+            box-shadow: 0 0 0 3px rgba(255, 77, 166, 0.1);
+            outline: none;
+        }
+
+        /* Dropdown */
+        .dropdown {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239CA3AF' viewBox='0 0 16 16'%3E%3Cpath d='M8 12l-4-4h8l-4 4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 12px;
+            cursor: pointer;
+        }
+        .dropdown:focus {
+            border-color: #FF4DA6;
+            box-shadow: 0 0 0 3px rgba(255, 77, 166, 0.1);
+        }
+
+        /* Avatar upload */
+        .avatar-upload {
+            transition: all 0.3s ease;
+        }
+        .avatar-upload:hover {
+            transform: scale(1.05);
+        }
+
+        /* Avatar and image containers */
+        .avatar-container {
+            width: 100px;
+            height: 100px;
+        }
+        @media (min-width: 640px) {
+            .avatar-container {
+                width: 120px;
+                height: 120px;
+            }
+        }
+        .avatar-camera {
+            padding: 6px;
+        }
+        @media (min-width: 640px) {
+            .avatar-camera {
+                padding: 8px;
+            }
+        }
+
+        /* Image placeholders */
+        .image-placeholder {
+            background-color: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .image-placeholder:hover {
+            transform: scale(1.05);
+        }
+        .image-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-camera {
+            padding: 4px;
+        }
+        @media (min-width: 640px) {
+            .image-camera {
+                padding: 6px;
+            }
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #FF4DA6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: #10b981;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 40;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+
+        /* Body background */
+        body {
+            background: rgba(31, 41, 55, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Footer container */
+        .footer-container {
+            display: flex;
+            justify-content: center;
+        }
+        .footer-container .relative {
+            max-width: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="text-gray-100 font-sans min-h-screen flex flex-col">
+    <main class="flex-1 px-4 sm:px-6 pb-8 sm:pb-10 overflow-y-auto">
+        <div class="max-w-sm sm:max-w-md mx-auto mb-5 sm:mb-6">
+            <h1 class="text-lg sm:text-xl font-bold font-poppins" id="stepTitle">Complete Your Profile</h1>
+            <p class="text-xs sm:text-sm text-gray-400 font-inter" id="stepCounter">Step 1 of 2</p>
+            <div id="alert" class="toast"></div>
+        </div>
+
+        <div id="step1" class="profile-card max-w-sm sm:max-w-md mx-auto space-y-5 sm:space-y-6 p-3 sm:p-4">
+            <div class="flex flex-col items-center">
+                <div class="relative mb-3 sm:mb-4">
+                    <div class="avatar-upload avatar-container rounded-full bg-gray-700 flex items-center justify-center overflow-hidden cursor-pointer">
+                        <img id="avatarPreview" src="" alt="Profile photo" class="w-full h-full object-cover hidden">
+                        <i data-feather="user" class="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" id="avatarPlaceholder"></i>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/*" class="hidden">
+                    <button id="avatarCameraBtn" class="avatar-camera absolute bottom-0 right-0 bg-pink-500 text-white rounded-full shadow-md hover:bg-pink-600 transition">
+                        <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <div id="avatarLoading" class="loading-spinner"></div>
+                </div>
+                <button id="uploadBtn" class="text-pink-400 hover:text-pink-500 text-xs sm:text-sm font-medium font-inter">Upload Profile Photo (Optional)</button>
+            </div>
+
+            <div class="space-y-3 sm:space-y-4">
+                <div>
+                    <label for="fullName" class="block text-xs sm:text-sm font-medium mb-1 font-inter text-gray-300">Full Name</label>
+                    <input type="text" id="fullName" class="input-field w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm" placeholder="Your full name">
+                </div>
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label for="age" class="block text-xs sm:text-sm font-medium mb-1 font-inter text-gray-300">Age</label>
+                    <input type="number" id="age" min="18" max="99" class="input-field w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm" placeholder="18">
+                    </div>
+                    <div>
+                        <label for="gender" class="block text-xs sm:text-sm font-medium mb-1 font-inter text-gray-300">Gender</label>
+                        <select id="gender" class="input-field dropdown w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm">
+                            <option value="">Select</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="location" class="block text-xs sm:text-sm font-medium mb-1 font-inter text-gray-300">Location</label>
+                    <select id="location" class="input-field dropdown w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm">
+                        <option value="">Select your state</option>
+                        <option value="abia">Abia</option>
+                        <option value="adamawa">Adamawa</option>
+                        <option value="akwa-ibom">Akwa Ibom</option>
+                        <option value="anambra">Anambra</option>
+                        <option value="bauchi">Bauchi</option>
+                        <option value="bayelsa">Bayelsa</option>
+                        <option value="benue">Benue</option>
+                        <option value="borno">Borno</option>
+                        <option value="cross-river">Cross River</option>
+                        <option value="delta">Delta</option>
+                        <option value="ebonyi">Ebonyi</option>
+                        <option value="edo">Edo</option>
+                        <option value="ekiti">Ekiti</option>
+                        <option value="enugu">Enugu</option>
+                        <option value="fct">Federal Capital Territory (Abuja)</option>
+                        <option value="gombe">Gombe</option>
+                        <option value="imo">Imo</option>
+                        <option value="jigawa">Jigawa</option>
+                        <option value="kaduna">Kaduna</option>
+                        <option value="kano">Kano</option>
+                        <option value="katsina">Katsina</option>
+                        <option value="kebbi">Kebbi</option>
+                        <option value="kogi">Kogi</option>
+                        <option value="kwara">Kwara</option>
+                        <option value="lagos">Lagos</option>
+                        <option value="nasarawa">Nasarawa</option>
+                        <option value="niger">Niger</option>
+                        <option value="ogun">Ogun</option>
+                        <option value="ondo">Ondo</option>
+                        <option value="osun">Osun</option>
+                        <option value="oyo">Oyo</option>
+                        <option value="plateau">Plateau</option>
+                        <option value="rivers">Rivers</option>
+                        <option value="sokoto">Sokoto</option>
+                        <option value="taraba">Taraba</option>
+                        <option value="yobe">Yobe</option>
+                        <option value="zamfara">Zamfara</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="role" class="block text-xs sm:text-sm font-medium mb-1 font-inter text-gray-300">I'm looking for</label>
+                    <select id="role" class="input-field dropdown w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm">
+                        <option value="">Select role</option>
+                        <option value="friends">Friends</option>
+                        <option value="dates">Dates</option>
+                        <option value="companions">Companions</option>
+                        <option value="escort">Escort</option>
+                        <option value="networking">Networking</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="bio" class="block text-xs sm:text-sm font-medium mb-1 font-inter text-gray-300">Short Bio</label>
+                    <textarea id="bio" rows="3" class="input-field w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm" placeholder="Tell others about yourself (max 300 characters)"></textarea>
+                    <div class="text-xs text-gray-400 text-right mt-1 font-inter" id="bioCounter">0/300</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="step2" class="profile-card max-w-sm sm:max-w-md mx-auto space-y-5 sm:space-y-6 p-3 sm:p-4 hidden">
+            <div class="text-center">
+                <h2 class="text-base sm:text-lg font-medium font-poppins">Add Your Photos</h2>
+                <p class="text-xs sm:text-sm text-gray-400 font-inter">Upload up to 5 images to showcase your personality (optional, distinct from profile photo)</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                <div class="relative">
+                    <div class="image-placeholder w-full aspect-square rounded-lg" id="imagePlaceholder1">
+                        <i data-feather="image" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                    </div>
+                    <input type="file" id="imageInput1" accept="image/*" class="hidden">
+                    <button class="image-camera absolute bottom-0 right-0 bg-pink-500 text-white rounded-full shadow-md hover:bg-pink-600 transition">
+                        <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <div id="imageLoading1" class="loading-spinner"></div>
+                </div>
+                <div class="relative">
+                    <div class="image-placeholder w-full aspect-square rounded-lg" id="imagePlaceholder2">
+                        <i data-feather="image" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                    </div>
+                    <input type="file" id="imageInput2" accept="image/*" class="hidden">
+                    <button class="image-camera absolute bottom-0 right-0 bg-pink-500 text-white rounded-full shadow-md hover:bg-pink-600 transition">
+                        <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <div id="imageLoading2" class="loading-spinner"></div>
+                </div>
+                <div class="relative">
+                    <div class="image-placeholder w-full aspect-square rounded-lg" id="imagePlaceholder3">
+                        <i data-feather="image" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                    </div>
+                    <input type="file" id="imageInput3" accept="image/*" class="hidden">
+                    <button class="image-camera absolute bottom-0 right-0 bg-pink-500 text-white rounded-full shadow-md hover:bg-pink-600 transition">
+                        <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <div id="imageLoading3" class="loading-spinner"></div>
+                </div>
+                <div class="relative">
+                    <div class="image-placeholder w-full aspect-square rounded-lg" id="imagePlaceholder4">
+                        <i data-feather="image" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                    </div>
+                    <input type="file" id="imageInput4" accept="image/*" class="hidden">
+                    <button class="image-camera absolute bottom-0 right-0 bg-pink-500 text-white rounded-full shadow-md hover:bg-pink-600 transition">
+                        <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <div id="imageLoading4" class="loading-spinner"></div>
+                </div>
+                <div class="relative">
+                    <div class="image-placeholder w-full aspect-square rounded-lg" id="imagePlaceholder5">
+                        <i data-feather="image" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                    </div>
+                    <input type="file" id="imageInput5" accept="image/*" class="hidden">
+                    <button class="image-camera absolute bottom-0 right-0 bg-pink-500 text-white rounded-full shadow-md hover:bg-pink-600 transition">
+                        <i data-feather="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                    </button>
+                    <div id="imageLoading5" class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="px-4 sm:px-6 py-4 border-t border-gray-800 footer-container">
+        <div class="relative max-w-sm sm:max-w-lg mx-auto">
+            <button id="continueBtn" class="btn-gradient w-full py-2.5 sm:py-3 rounded-lg text-white font-medium text-sm sm:text-base disabled:opacity-50" disabled>
+                Continue
+            </button>
+            <div id="continueLoading" class="loading-spinner absolute right-0 top-1/2 -translate-y-1/2"></div>
+        </div>
+    </footer>
+
+    <script>
+     feather.replace();
+
+// Detect iOS
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+// API URL for Render
+const API_URL = 'https://coded-mbkz.onrender.com';
+
+// Show toast notification
+function showAlert(message, type = 'error') {
+    const alertBox = document.getElementById('alert');
+    alertBox.classList.remove('hidden');
+    alertBox.className = `toast ${type === 'error' ? 'error' : ''}`;
+    alertBox.textContent = message;
+    alertBox.style.display = 'block';
+    setTimeout(() => {
+        alertBox.style.opacity = '0';
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+            alertBox.style.opacity = '1';
+            alertBox.classList.add('hidden');
+        }, 300);
+    }, 3000);
+}
+
+// Step management
+let currentStep = 1;
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const stepTitle = document.getElementById('stepTitle');
+const stepCounter = document.getElementById('stepCounter');
+const continueBtn = document.getElementById('continueBtn');
+const continueLoading = document.getElementById('continueLoading');
+
+function updateStepUI() {
+    stepTitle.textContent = currentStep === 1 ? 'Complete Your Profile' : 'Add Your Photos';
+    stepCounter.textContent = `Step ${currentStep} of 2`;
+    step1.classList.toggle('hidden', currentStep !== 1);
+    step2.classList.toggle('hidden', currentStep !== 2);
+    validateForm();
+}
+
+// Avatar upload
+const avatarInput = document.getElementById('avatarInput');
+const avatarPreview = document.getElementById('avatarPreview');
+const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+const uploadBtn = document.getElementById('uploadBtn');
+const avatarCameraBtn = document.getElementById('avatarCameraBtn');
+const avatarLoading = document.getElementById('avatarLoading');
+let avatarUrl = '';
+
+uploadBtn.addEventListener('click', () => avatarInput.click());
+avatarCameraBtn.addEventListener('click', () => avatarInput.click());
+
+avatarInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+        console.log('No file selected for avatar');
+        return;
+    }
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+        showAlert('Only JPEG or PNG images are allowed');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('Avatar image must be less than 5MB');
+        return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('Please log in to upload images');
+        window.location.href = '/auth.html';
+        return;
+    }
+    try {
+        avatarLoading.style.display = 'block';
+        avatarCameraBtn.disabled = true;
+        uploadBtn.disabled = true;
+        console.log('Avatar file details:', { name: file.name, size: file.size || 'unknown', type: file.type, lastModified: file.lastModified, isIOS });
+        const formData = new FormData();
+        formData.append('avatar', file); // Changed to 'avatar'
+        const response = await fetch(`${API_URL}/api/users/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        const data = await response.json();
+        console.log('Avatar upload response:', { status: response.status, statusText: response.statusText, data });
+        if (!response.ok) {
+            throw new Error(data.error || data.details || `Avatar upload failed with status ${response.status}`);
+        }
+        if (!data.avatarUrl) {
+            throw new Error('No avatar URL returned from upload');
+        }
+        if (!data.avatarUrl.startsWith('https://res.cloudinary.com')) {
+            throw new Error('Invalid Cloudinary URL for avatar');
+        }
+        avatarUrl = data.avatarUrl;
+        avatarPreview.src = data.avatarUrl;
+        avatarPreview.classList.remove('hidden');
+        avatarPlaceholder.classList.add('hidden');
+        showAlert('Avatar uploaded successfully!', 'success');
+    } catch (error) {
+        console.error('Avatar upload error:', { message: error.message, stack: error.stack });
+        showAlert(error.message.includes('Invalid or expired token') ? 'Session expired. Please log in again.' : `Failed to upload avatar: ${error.message}`);
+        if (error.message.includes('Invalid or expired token')) {
+            localStorage.removeItem('token');
+            window.location.href = '/auth.html';
+        }
+    } finally {
+        avatarLoading.style.display = 'none';
+        avatarCameraBtn.disabled = false;
+        uploadBtn.disabled = false;
+    }
+});
+
+// Image uploads
+const imageUrls = Array(5).fill(null);
+const uploadedImageNames = new Set();
+for (let i = 1; i <= 5; i++) {
+    const imageInput = document.getElementById(`imageInput${i}`);
+    const imagePlaceholder = document.getElementById(`imagePlaceholder${i}`);
+    const imageCameraBtn = imageInput.nextElementSibling;
+    const imageLoading = document.getElementById(`imageLoading${i}`);
+    imageCameraBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            console.log(`No file selected for image ${i}`);
+            return;
+        }
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            showAlert(`Only JPEG or PNG images are allowed for image ${i}`);
+            return;
+        }
+        if (uploadedImageNames.has(file.name) || (avatarInput.files[0] && avatarInput.files[0].name === file.name)) {
+            showAlert('This image has already been uploaded');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showAlert(`Image ${i} must be less than 5MB`);
+            return;
+        }
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showAlert('Please log in to upload images');
+            window.location.href = '/auth.html';
+            return;
+        }
+        try {
+            imageLoading.style.display = 'block';
+            imageCameraBtn.disabled = true;
+            console.log(`Image ${i} file details:`, { name: file.name, size: file.size || 'unknown', type: file.type, lastModified: file.lastModified, isIOS });
+            const formData = new FormData();
+            formData.append('images', file); // Changed to 'images'
+            const response = await fetch(`${API_URL}/api/users/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await response.json();
+            console.log(`Image ${i} upload response:`, { status: response.status, statusText: response.statusText, data });
+            if (!response.ok) {
+                throw new Error(data.error || data.details || `Image ${i} upload failed with status ${response.status}`);
+            }
+            if (!data.imageUrls || !data.imageUrls[0]) {
+                throw new Error(`No URL returned for image ${i} upload`);
+            }
+            if (!data.imageUrls[0].startsWith('https://res.cloudinary.com')) {
+                throw new Error(`Invalid Cloudinary URL for image ${i}`);
+            }
+            imageUrls[i - 1] = data.imageUrls[0];
+            uploadedImageNames.add(file.name);
+            const img = document.createElement('img');
+            img.src = data.imageUrls[0];
+            img.classList.add('image-preview');
+            imagePlaceholder.innerHTML = '';
+            imagePlaceholder.appendChild(img);
+            showAlert(`Image ${i} uploaded successfully!`, 'success');
+        } catch (error) {
+            console.error(`Image ${i} upload error:`, { message: error.message, stack: error.stack });
+            showAlert(error.message.includes('Invalid or expired token') ? 'Session expired. Please log in again.' : `Failed to upload image ${i}: ${error.message}`);
+            if (error.message.includes('Invalid or expired token')) {
+                localStorage.removeItem('token');
+                window.location.href = '/auth.html';
+            }
+        } finally {
+            imageLoading.style.display = 'none';
+            imageCameraBtn.disabled = false;
+        }
+    });
+}
+
+// Bio counter
+const bio = document.getElementById('bio');
+const bioCounter = document.getElementById('bioCounter');
+
+bio.addEventListener('input', () => {
+    const count = bio.value.length;
+    bioCounter.textContent = `${count}/300`;
+    if (count > 300) {
+        bioCounter.classList.add('text-red-500');
+        bio.value = bio.value.substring(0, 300);
+        bioCounter.textContent = '300/300';
+    } else {
+        bioCounter.classList.remove('text-red-500');
+    }
+    validateForm();
+});
+
+// Form validation
+const formFields = [
+    document.getElementById('fullName'),
+    document.getElementById('age'),
+    document.getElementById('gender'),
+    document.getElementById('location'),
+    document.getElementById('role'),
+    bio
+];
+formFields.forEach(field => field.addEventListener('input', validateForm));
+
+function validateForm() {
+    if (currentStep === 1) {
+        const isValid = formFields.every(field => field.value && (field.id !== 'bio' || field.value.length <= 300));
+        continueBtn.disabled = !isValid;
+    }
+}
+
+// Continue button
+continueBtn.addEventListener('click', async () => {
+    if (currentStep === 1) {
+        currentStep = 2;
+        updateStepUI();
+    } else {
+        const formData = {
+            fullName: document.getElementById('fullName').value,
+            age: parseInt(document.getElementById('age').value),
+            gender: document.getElementById('gender').value,
+            location: document.getElementById('location').value,
+            role: document.getElementById('role').value,
+            bio: document.getElementById('bio').value,
+            avatar: avatarUrl || undefined,
+            images: imageUrls.filter(url => url)
+        };
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showAlert('Please log in to save profile');
+            window.location.href = '/auth.html';
+            return;
+        }
+        try {
+            continueBtn.disabled = true;
+            continueLoading.style.display = 'block';
+            console.log('Submitting profile:', formData);
+            const response = await fetch(`${API_URL}/api/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            console.log('Profile submission response:', { status: response.status, statusText: response.statusText, data });
+            if (!response.ok) {
+                throw new Error(data.error || data.details || `Profile update failed with status ${response.status}`);
+            }
+            showAlert('Profile saved successfully!', 'success');
+            setTimeout(() => window.location.href = '/home.html', 1000);
+        } catch (error) {
+            console.error('Profile submission error:', { message: error.message, stack: error.stack });
+            showAlert(error.message.includes('Invalid or expired token') ? 'Session expired. Please log in again.' : `Failed to save profile: ${error.message}`);
+            if (error.message.includes('Invalid or expired token')) {
+                localStorage.removeItem('token');
+                window.location.href = '/auth.html';
+            }
+        } finally {
+            continueBtn.disabled = false;
+            continueLoading.style.display = 'none';
+        }
+    }
+});
+
+// Initialize
+updateStepUI();
+    </script>
+</body>
+</html>

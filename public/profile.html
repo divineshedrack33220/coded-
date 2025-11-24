@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View and update your profile on Coded Signals">
+    <title>Coded Signals - Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #FF4DA6, #FF77C6);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #FF77C6, #FF4DA6);
+        }
+        .profile-card {
+            transition: all 0.3s ease;
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 77, 166, 0.2);
+        }
+        .post-card {
+            transition: all 0.3s ease;
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 1rem;
+            height: 100%;
+        }
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 77, 166, 0.2);
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #FF4DA6, #FF77C6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .btn-gradient {
+            background: linear-gradient(to right, #FF4DA6, #FF77C6);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 77, 166, 0.3);
+        }
+        .input-field:focus {
+            border-color: #FF4DA6;
+            box-shadow: 0 0 0 3px rgba(255, 77, 166, 0.1);
+        }
+        .input-field.error {
+            border-color: #ef4444;
+        }
+        .error-text {
+            color: #ef4444;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: rgba(31, 41, 55, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            position: relative;
+            color: #f3f4f6;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .modal-open .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .modal-content input,
+        .modal-content textarea,
+        .modal-content select {
+            width: 100%;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            background: #374151;
+            color: #f3f4f6;
+        }
+        .modal-content input:focus,
+        .modal-content textarea:focus,
+        .modal-content select:focus {
+            border-color: #FF4DA6;
+            outline: none;
+        }
+        .modal-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: #10b981;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 40;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .images-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-bottom: 0.5rem;
+            scroll-snap-type: x mandatory;
+        }
+        .images-grid img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+        }
+        .no-posts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+        .no-posts i {
+            margin-bottom: 1.5rem;
+            width: 3rem;
+            height: 3rem;
+        }
+        .loader {
+            width: 50px;
+            aspect-ratio: 1;
+            display: grid;
+            border: 4px solid #0000;
+            border-radius: 50%;
+            border-right-color: #FF4DA6;
+            animation: l15 1s infinite linear;
+            margin: 2rem auto;
+        }
+        .loader::before,
+        .loader::after {
+            content: "";
+            grid-area: 1/1;
+            margin: 2px;
+            border: inherit;
+            border-radius: 50%;
+            animation: l15 2s infinite;
+        }
+        .loader::after {
+            margin: 8px;
+            animation-duration: 3s;
+        }
+        @keyframes l15 {
+            100% { transform: rotate(1turn) }
+        }
+        .truncate-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 1280px;
+                margin: 0 auto;
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+            h1 {
+                font-size: 1.75rem;
+            }
+            .profile-card, .post-card {
+                max-width: none;
+            }
+            .profile-grid {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 2rem;
+            }
+            .no-posts {
+                font-size: 1.5rem;
+                padding: 4rem;
+            }
+            .profile-layout {
+                display: grid;
+                grid-template-columns: 1fr 2fr;
+                gap: 2rem;
+            }
+            .profile-sidebar {
+                position: sticky;
+                top: 6rem;
+                align-self: start;
+            }
+            .profile-main {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+        }
+        @media (max-width: 1023px) {
+            .top-nav {
+                display: none;
+            }
+            .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .profile-card, .post-card {
+                padding: 0.75rem;
+            }
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+        .loading .content {
+            display: none;
+        }
+        .form-loading .btn-gradient {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+    <nav class="top-nav sticky top-0 z-20 bg-gray-900/80 border-b border-gray-800 py-4 px-6 backdrop-blur-sm">
+        <div class="container flex items-center justify-between">
+            <h1 class="text-xl font-bold gradient-text">Coded <span class="text-white">Signals</span></h1>
+            <div class="hidden lg:flex items-center space-x-6">
+                <a href="/home.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                    <i data-feather="home" class="w-5 h-5 inline mr-1"></i> Home
+                </a>
+                <a href="/explore.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                    <i data-feather="plus-circle" class="w-5 h-5 inline mr-1"></i> Request
+                </a>
+                <a href="/chat.html" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                    <i data-feather="message-square" class="w-5 h-5 inline mr-1"></i> Chat
+                </a>
+                <a href="/profile.html" class="nav-item active font-medium text-pink-400" aria-current="page">
+                    <i data-feather="user" class="w-5 h-5 inline mr-1"></i> Profile
+                </a>
+                <button id="logout-btn-top" class="nav-item font-medium text-gray-400 hover:text-pink-400">
+                    <i data-feather="log-out" class="w-5 h-5 inline mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+    <header class="sticky top-0 z-10 bg-gray-900/80 border-b border-gray-800 py-4 px-6 lg:hidden backdrop-blur-sm">
+        <div class="container flex items-center justify-between">
+            <h1 class="text-xl font-bold gradient-text">Coded <span class="text-white">Signals</span></h1>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full hover:bg-gray-700" aria-label="Search">
+                    <i data-feather="search" class="w-5 h-5 text-pink-400"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-gray-700" aria-label="Notifications">
+                    <i data-feather="bell" class="w-5 h-5 text-pink-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    <div id="toast" class="toast"></div>
+    <div id="update-profile-modal" class="modal" role="dialog" aria-labelledby="update-profile-title" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close p-2 rounded-full hover:bg-gray-700" aria-label="Close modal">
+                <i data-feather="x" class="w-5 h-5 text-gray-400"></i>
+            </button>
+            <h2 id="update-profile-title" class="text-lg font-semibold gradient-text mb-4">Update Profile</h2>
+            <form id="update-profile-form" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label for="fullName" class="text-sm font-medium mb-1 block">Full Name</label>
+                    <input id="fullName" type="text" class="input-field" placeholder="Enter full name">
+                    <p id="fullName-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="text-sm font-medium mb-1 block">Email</label>
+                    <input id="email" type="email" class="input-field" placeholder="Enter email">
+                    <p id="email-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="phone" class="text-sm font-medium mb-1 block">Phone Number</label>
+                    <input id="phone" type="tel" class="input-field" placeholder="Enter phone number">
+                    <p id="phone-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="age" class="text-sm font-medium mb-1 block">Age</label>
+                    <input id="age" type="number" class="input-field" min="18" max="99" placeholder="Enter age">
+                    <p id="age-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="gender" class="text-sm font-medium mb-1 block">Gender</label>
+                    <select id="gender" class="input-field">
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <p id="gender-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="location" class="text-sm font-medium mb-1 block">Location</label>
+                    <input id="location" type="text" class="input-field" placeholder="Enter location">
+                    <p id="location-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="role" class="text-sm font-medium mb-1 block">Role</label>
+                    <select id="role" class="input-field">
+                        <option value="" disabled selected>Select role</option>
+                        <option value="friends">Friends</option>
+                        <option value="dates">Dates</option>
+                        <option value="companions">Companions</option>
+                        <option value="escort">Escort</option>
+                        <option value="networking">Networking</option>
+                    </select>
+                    <p id="role-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="bio" class="text-sm font-medium mb-1 block">Bio (max 300 characters)</label>
+                    <textarea id="bio" class="input-field" maxlength="300" placeholder="Tell us about yourself"></textarea>
+                    <p id="bio-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="avatar" class="text-sm font-medium mb-1 block">Profile Picture (max 5MB)</label>
+                    <input id="avatar" type="file" accept="image/jpeg,image/jpg,image/png" class="input-field">
+                    <p id="avatar-error" class="error-text hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="images" class="text-sm font-medium mb-1 block">Additional Images (up to 5, max 5MB each)</label>
+                    <input id="images" type="file" accept="image/jpeg,image/jpg,image/png" multiple class="input-field">
+                    <p id="images-error" class="error-text hidden"></p>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" class="px-4 py-2 text-gray-400 rounded-full hover:bg-gray-700" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-gradient text-white px-4 py-2 rounded-full">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <main class="flex-1 py-8 container px-4 overflow-y-auto pb-16 lg:pb-0">
+        <div class="loader" aria-label="Loading profile"></div>
+        <div class="content">
+            <div class="profile-layout">
+                <aside class="profile-sidebar">
+                    <section aria-labelledby="profile-header">
+                        <h2 id="profile-header" class="sr-only">Profile Header</h2>
+                        <div class="profile-card mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <img id="profile-avatar" src="" alt="User profile picture" class="w-20 h-20 rounded-full object-cover mr-4">
+                                    <div>
+                                        <h3 id="profile-fullName" class="font-semibold text-xl gradient-text"></h3>
+                                        <p id="profile-role-location-age" class="text-sm text-gray-400"></p>
+                                        <span id="profile-verified" class="text-xs bg-pink-900 text-pink-300 px-2 py-1 rounded mt-1 inline-block hidden">Verified</span>
+                                    </div>
+                                </div>
+                                <button class="btn-gradient text-white text-sm px-4 py-2 rounded-full" data-modal-toggle="update-profile-modal">Update Profile</button>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-300 mt-4">
+                                <span id="profile-connections">0 Connections</span>
+                                <span id="profile-posts">0 Posts</span>
+                                <span id="profile-rating">Rating: 0 (0 reviews)</span>
+                            </div>
+                        </div>
+                    </section>
+                </aside>
+                <div class="profile-main">
+                    <section aria-labelledby="profile-info">
+                        <h2 id="profile-info" class="text-lg font-semibold mb-4 gradient-text">Profile Information</h2>
+                        <div class="profile-card mb-6">
+                            <div class="space-y-3">
+                                <p class="text-sm text-gray-300"><i data-feather="mail" class="w-4 h-4 inline mr-2"></i><span id="profile-email"></span></p>
+                                <p class="text-sm text-gray-300"><i data-feather="phone" class="w-4 h-4 inline mr-2"></i><span id="profile-phone"></span></p>
+                                <p class="text-sm text-gray-300"><i data-feather="user" class="w-4 h-4 inline mr-2"></i><span id="profile-gender"></span></p>
+                                <p class="text-sm text-gray-300"><i data-feather="info" class="w-4 h-4 inline mr-2"></i><span id="profile-bio"></span></p>
+                                <p class="text-sm text-gray-300"><i data-feather="calendar" class="w-4 h-4 inline mr-2"></i><span id="profile-joined"></span></p>
+                            </div>
+                        </div>
+                    </section>
+                    <section aria-labelledby="profile-images">
+                        <h2 id="profile-images" class="text-lg font-semibold mb-4 gradient-text">Additional Images</h2>
+                        <div class="profile-card mb-6">
+                            <div id="profile-images-grid" class="images-grid"></div>
+                        </div>
+                    </section>
+                    <section aria-labelledby="user-posts">
+                        <h2 id="user-posts" class="text-lg font-semibold mb-4 gradient-text">Your Posts</h2>
+                        <div class="profile-grid"></div>
+                        <div class="no-posts hidden">
+                            <i data-feather="alert-circle" class="w-8 h-8 mb-4"></i>
+                            <p>No posts yet. Start sharing!</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 bg-gray-900/80 border-t border-gray-800 flex justify-around py-3 px-4 lg:hidden backdrop-blur-sm z-30">
+        <a href="/home.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+            <i data-feather="home" class="w-5 h-5 mb-1"></i>
+            <span>Home</span>
+        </a>
+        <a href="/explore.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+            <i data-feather="plus-circle" class="w-5 h-5 mb-1"></i>
+            <span>Request</span>
+        </a>
+        <a href="/chat.html" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+            <i data-feather="message-square" class="w-5 h-5 mb-1"></i>
+            <span>Chat</span>
+        </a>
+        <a href="/profile.html" class="nav-item active flex flex-col items-center text-xs text-pink-400" aria-current="page">
+            <i data-feather="user" class="w-5 h-5 mb-1"></i>
+            <span>Profile</span>
+        </a>
+        <button id="logout-btn-bottom" class="nav-item flex flex-col items-center text-xs text-gray-400 hover:text-pink-400">
+            <i data-feather="log-out" class="w-5 h-5 mb-1"></i>
+            <span>Logout</span>
+        </button>
+    </nav>
+    <script>
+        const API_URL = 'https://coded-mbkz.onrender.com';
+        const defaultAvatar = 'data:image/jpeg;base64,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';
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            if (!toast) {
+                console.error('Toast element not found');
+                return;
+            }
+            toast.textContent = message;
+            toast.className = `toast ${isError ? 'error' : ''}`;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    toast.style.opacity = '1';
+                }, 300);
+            }, 3000);
+        }
+
+        function logout() {
+            console.log('Logging out');
+            localStorage.removeItem('token');
+            showToast('Logged out successfully!');
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 1000);
+        }
+
+        async function fetchProfile() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('No token found in localStorage');
+                showToast('Please log in to view your profile', true);
+                window.location.href = '/login.html';
+                return null;
+            }
+            try {
+                console.log('Fetching user profile');
+                const response = await fetch(`${API_URL}/api/users/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401 || response.status === 403) {
+                    console.error('Invalid or expired token');
+                    showToast('Session expired. Please log in again.', true);
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Failed to fetch profile: ${response.status}`);
+                }
+                const user = await response.json();
+                console.log('Fetched profile:', user);
+                return user;
+            } catch (error) {
+                console.error('Fetch profile error:', error.message);
+                showToast(error.message, true);
+                return null;
+            }
+        }
+
+        function renderProfile(user) {
+            const profileAvatar = document.getElementById('profile-avatar');
+            const profileFullName = document.getElementById('profile-fullName');
+            const profileRoleLocationAge = document.getElementById('profile-role-location-age');
+            const profileEmail = document.getElementById('profile-email');
+            const profilePhone = document.getElementById('profile-phone');
+            const profileGender = document.getElementById('profile-gender');
+            const profileBio = document.getElementById('profile-bio');
+            const profileJoined = document.getElementById('profile-joined');
+            const profileImages = document.getElementById('profile-images-grid');
+            const profileVerified = document.getElementById('profile-verified');
+            const profileConnections = document.getElementById('profile-connections');
+            const profilePosts = document.getElementById('profile-posts');
+            const profileRating = document.getElementById('profile-rating');
+            if (!profileAvatar || !profileFullName || !profileRoleLocationAge || !profileEmail || !profilePhone || !profileGender || !profileBio || !profileJoined || !profileImages || !profileVerified || !profileConnections || !profilePosts || !profileRating) {
+                console.error('Profile elements not found');
+                showToast('Error rendering profile: UI elements missing', true);
+                return;
+            }
+            if (!user) {
+                console.warn('No user data provided');
+                showToast('No profile data available. Please log in.', true);
+                return;
+            }
+            profileAvatar.src = user.avatar || defaultAvatar;
+            profileAvatar.alt = `${user.fullName || 'User'} profile picture`;
+            profileFullName.textContent = user.fullName || 'N/A';
+            profileRoleLocationAge.textContent = `${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'} • ${user.location || 'N/A'} • ${user.age || 'N/A'}`;
+            profileEmail.textContent = `Email: ${user.email || 'N/A'}`;
+            profilePhone.textContent = `Phone: ${user.phone || 'N/A'}`;
+            profileGender.textContent = `Gender: ${user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'N/A'}`;
+            profileBio.textContent = `Bio: ${user.bio || 'N/A'}`;
+            profileJoined.textContent = `Joined: ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}`;
+            profileVerified.classList.toggle('hidden', !user.verified);
+            profileConnections.textContent = `${user.connections?.length || 0} Connections`;
+            profilePosts.textContent = `${user.posts?.length || 0} Posts`;
+            profileRating.textContent = `Rating: ${user.rating?.average?.toFixed(1) || 0} (${user.rating?.count || 0} reviews)`;
+            profileImages.innerHTML = '';
+            if (user.images && Array.isArray(user.images) && user.images.length > 0) {
+                const uniqueImages = [...new Set(user.images)];
+                uniqueImages.forEach((img, index) => {
+                    if (img && typeof img === 'string') {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = img;
+                        imgElement.alt = `${user.fullName || 'User'} image ${index + 1}`;
+                        profileImages.appendChild(imgElement);
+                    }
+                });
+            } else {
+                profileImages.innerHTML = '<p class="text-sm text-gray-300">No additional images</p>';
+            }
+            const fullNameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            const ageInput = document.getElementById('age');
+            const genderInput = document.getElementById('gender');
+            const locationInput = document.getElementById('location');
+            const roleInput = document.getElementById('role');
+            const bioInput = document.getElementById('bio');
+            if (fullNameInput && emailInput && phoneInput && ageInput && genderInput && locationInput && roleInput && bioInput) {
+                fullNameInput.value = user.fullName || '';
+                emailInput.value = user.email || '';
+                phoneInput.value = user.phone || '';
+                ageInput.value = user.age || '';
+                genderInput.value = user.gender || '';
+                locationInput.value = user.location || '';
+                roleInput.value = user.role || '';
+                bioInput.value = user.bio || '';
+            } else {
+                console.error('Form input elements not found');
+                showToast('Error loading form fields', true);
+            }
+        }
+
+        function renderPosts(posts) {
+            const profileGrid = document.querySelector('.profile-grid');
+            const noPosts = document.querySelector('.no-posts');
+            if (!profileGrid || !noPosts) {
+                console.error('Profile grid or no-posts element not found');
+                showToast('Error rendering posts: UI elements missing', true);
+                return;
+            }
+            profileGrid.innerHTML = '';
+            noPosts.classList.add('hidden');
+            if (!posts || !Array.isArray(posts) || posts.length === 0) {
+                console.warn('No valid posts data:', posts);
+                noPosts.classList.remove('hidden');
+                feather.replace();
+                return;
+            }
+            posts.forEach(post => {
+                if (!post || !post.content || !post.createdAt || !post.user || !post.user.fullName) {
+                    console.warn('Incomplete post data:', post);
+                    return;
+                }
+                const card = document.createElement('div');
+                card.className = 'post-card';
+                card.innerHTML = `
+                    <div class="flex items-center mb-3">
+                        <img src="${post.user.avatar || defaultAvatar}" alt="${post.user.fullName} profile picture" class="w-10 h-10 rounded-full object-cover mr-3">
+                        <div>
+                            <h3 class="font-medium text-white">${post.user.fullName}</h3>
+                            <p class="text-xs text-gray-400">${new Date(post.createdAt).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    ${post.image ? `<img src="${post.image}" alt="Post image" class="w-full h-48 object-cover rounded mb-3">` : ''}
+                    <p class="text-sm text-gray-300 mb-4 truncate-text">${post.content}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-400">${Array.isArray(post.acceptances) ? post.acceptances.length : 0} Acceptances</span>
+                        <button class="text-xs text-gray-400 hover:text-pink-400">View Details</button>
+                    </div>
+                `;
+                profileGrid.appendChild(card);
+            });
+            feather.replace();
+        }
+
+        async function updateProfile(data) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('No token found');
+                showToast('Please log in to update your profile', true);
+                return null;
+            }
+            try {
+                console.log('Updating profile:', data);
+                const formData = new FormData();
+                for (const key in data) {
+                    if (data[key] && (key !== 'avatar' && key !== 'images' || data[key].size > 0)) {
+                        if (key === 'avatar' && data[key]) {
+                            formData.append(key, data[key]);
+                        } else if (key === 'images' && data[key]) {
+                            for (let i = 0; i < Math.min(data[key].length, 5); i++) {
+                                formData.append('images', data[key][i]);
+                            }
+                        } else if (data[key] !== '') {
+                            formData.append(key, data[key]);
+                        }
+                    }
+                }
+                document.body.classList.add('form-loading');
+                const response = await fetch(`${API_URL}/api/users/profile`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                document.body.classList.remove('form-loading');
+                if (response.status === 401 || response.status === 403) {
+                    console.error('Invalid or expired token');
+                    showToast('Session expired. Please log in again.', true);
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                    return null;
+                }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    if (errorData.details && Array.isArray(errorData.details)) {
+                        handleFormErrors(errorData.details);
+                    }
+                    throw new Error(errorData.error || `Failed to update profile: ${response.status}`);
+                }
+                const result = await response.json();
+                console.log('Profile updated successfully:', result);
+                return result.user;
+            } catch (error) {
+                document.body.classList.remove('form-loading');
+                console.error('Update profile error:', error.message);
+                showToast(error.message, true);
+                return null;
+            }
+        }
+
+        function validateForm(data) {
+            clearFormErrors();
+            let isValid = true;
+            if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+                showFormError('email', 'Invalid email format');
+                isValid = false;
+            }
+            if (data.phone && !/^\+?[1-9]\d{1,14}$/.test(data.phone)) {
+                showFormError('phone', 'Invalid phone number format');
+                isValid = false;
+            }
+            if (data.age) {
+                const ageNum = parseInt(data.age);
+                if (isNaN(ageNum) || ageNum < 18 || ageNum > 99) {
+                    showFormError('age', 'Age must be between 18 and 99');
+                    isValid = false;
+                }
+            }
+            if (data.gender && !['male', 'female', 'other'].includes(data.gender)) {
+                showFormError('gender', 'Invalid gender');
+                isValid = false;
+            }
+            if (data.role && !['friends', 'dates', 'companions', 'escort', 'networking'].includes(data.role)) {
+                showFormError('role', 'Invalid role');
+                isValid = false;
+            }
+            if (data.bio && data.bio.length > 300) {
+                showFormError('bio', 'Bio must be 300 characters or less');
+                isValid = false;
+            }
+            if (data.images && data.images.length > 5) {
+                showFormError('images', 'Maximum 5 images allowed');
+                isValid = false;
+            }
+            if (data.avatar && data.avatar.size > 5 * 1024 * 1024) {
+                showFormError('avatar', 'Profile picture must be less than 5MB');
+                isValid = false;
+            }
+            if (data.images) {
+                for (let i = 0; i < data.images.length; i++) {
+                    if (data.images[i].size > 5 * 1024 * 1024) {
+                        showFormError('images', `Image ${i + 1} must be less than 5MB`);
+                        isValid = false;
+                    }
+                }
+            }
+            return isValid;
+        }
+
+        function showFormError(fieldId, message) {
+            const input = document.getElementById(fieldId);
+            const errorText = document.getElementById(`${fieldId}-error`);
+            if (input && errorText) {
+                input.classList.add('error');
+                errorText.textContent = message;
+                errorText.classList.remove('hidden');
+            }
+        }
+
+        function clearFormErrors() {
+            const fields = ['fullName', 'email', 'phone', 'age', 'gender', 'location', 'role', 'bio', 'avatar', 'images'];
+            fields.forEach(field => {
+                const input = document.getElementById(field);
+                const errorText = document.getElementById(`${field}-error`);
+                if (input && errorText) {
+                    input.classList.remove('error');
+                    errorText.textContent = '';
+                    errorText.classList.add('hidden');
+                }
+            });
+        }
+
+        function handleFormErrors(errors) {
+            clearFormErrors();
+            errors.forEach(error => {
+                const field = error.toLowerCase().includes('email') ? 'email' :
+                             error.toLowerCase().includes('phone') ? 'phone' :
+                             error.toLowerCase().includes('age') ? 'age' :
+                             error.toLowerCase().includes('gender') ? 'gender' :
+                             error.toLowerCase().includes('role') ? 'role' :
+                             error.toLowerCase().includes('bio') ? 'bio' : null;
+                if (field) {
+                    showFormError(field, error);
+                }
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('update-profile-modal');
+            modal.classList.remove('modal-open');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                clearFormErrors();
+                document.getElementById('update-profile-form').reset();
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM loaded, initializing page');
+            const body = document.body;
+            const loader = document.querySelector('.loader');
+            const content = document.querySelector('.content');
+            if (!loader || !content) {
+                console.error('Loader or content element not found');
+                showToast('Error loading page: UI elements missing', true);
+                return;
+            }
+            body.classList.add('loading');
+            const user = await fetchProfile();
+            if (user) {
+                body.classList.remove('loading');
+                loader.style.display = 'none';
+                content.style.display = 'block';
+                renderProfile(user);
+                renderPosts(user.posts || []);
+            } else {
+                console.error('Failed to load profile data');
+                showToast('Failed to load profile data. Please try again.', true);
+            }
+            const updateProfileModal = document.getElementById('update-profile-modal');
+            const updateProfileBtn = document.querySelector('[data-modal-toggle="update-profile-modal"]');
+            const updateProfileCloseBtn = updateProfileModal?.querySelectorAll('.modal-close');
+            const updateProfileForm = document.getElementById('update-profile-form');
+            if (!updateProfileModal || !updateProfileBtn || !updateProfileCloseBtn || !updateProfileForm) {
+                console.error('Modal elements not found:', {
+                    updateProfileModal: !!updateProfileModal,
+                    updateProfileBtn: !!updateProfileBtn,
+                    updateProfileCloseBtn: !!updateProfileCloseBtn,
+                    updateProfileForm: !!updateProfileForm
+                });
+                showToast('Error initializing modal', true);
+                return;
+            }
+            updateProfileBtn.addEventListener('click', () => {
+                console.log('Update Profile button clicked');
+                updateProfileModal.style.display = 'flex';
+                updateProfileModal.classList.add('modal-open');
+                updateProfileModal.setAttribute('aria-hidden', 'false');
+                document.querySelector('#fullName')?.focus();
+            });
+            updateProfileCloseBtn.forEach(btn => {
+                btn.addEventListener('click', closeModal);
+            });
+            updateProfileModal.addEventListener('click', (e) => {
+                if (e.target === updateProfileModal) {
+                    console.log('Update Profile modal background clicked');
+                    closeModal();
+                }
+            });
+            updateProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('Update Profile form submitted');
+                const fullName = document.getElementById('fullName')?.value;
+                const email = document.getElementById('email')?.value;
+                const phone = document.getElementById('phone')?.value;
+                const age = document.getElementById('age')?.value;
+                const gender = document.getElementById('gender')?.value;
+                const location = document.getElementById('location')?.value;
+                const role = document.getElementById('role')?.value;
+                const bio = document.getElementById('bio')?.value;
+                const avatar = document.getElementById('avatar')?.files[0];
+                const images = document.getElementById('images')?.files;
+                const data = {
+                    fullName,
+                    email,
+                    phone,
+                    age,
+                    gender,
+                    location,
+                    role,
+                    bio,
+                    avatar,
+                    images
+                };
+                if (!validateForm(data)) {
+                    return;
+                }
+                if (!fullName && !email && !phone && !age && !gender && !location && !role && !bio && !avatar && (!images || images.length === 0)) {
+                    console.warn('No fields provided for update');
+                    showToast('Please provide at least one field to update', true);
+                    return;
+                }
+                const updatedUser = await updateProfile(data);
+                if (updatedUser) {
+                    renderProfile(updatedUser);
+                    renderPosts(updatedUser.posts || []);
+                    closeModal();
+                    showToast('Profile updated successfully!');
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && updateProfileModal.style.display === 'flex') {
+                    console.log('Escape key pressed, closing modal');
+                    closeModal();
+                }
+            });
+            const logoutBtnTop = document.getElementById('logout-btn-top');
+            const logoutBtnBottom = document.getElementById('logout-btn-bottom');
+            if (logoutBtnTop) {
+                logoutBtnTop.addEventListener('click', logout);
+            }
+            if (logoutBtnBottom) {
+                logoutBtnBottom.addEventListener('click', logout);
+            }
+            feather.replace();
+        });
+    </script>
+</body>
+</html>
