@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ['https://coded-mbkz.onrender.com', 'http://localhost:5000'],
+    origin: ['https://codedsignal.org', 'http://localhost:5000'],
     methods: ['GET', 'POST'],
   },
 });
@@ -46,7 +46,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Middleware
-app.use(cors({ origin: ['https://coded-mbkz.onrender.com', 'http://localhost:5000'] }));
+app.use(cors({ origin: ['https://codedsignal.org', 'http://localhost:5000'] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
@@ -118,7 +118,7 @@ app.post('/api/users/upload', auth, upload.single('image'), async (req, res) => 
       return res.status(400).json({ error: 'No image file uploaded' });
     }
     console.log('Image uploaded:', { filename: req.file.filename, path: req.file.path });
-    res.json({ url: `${process.env.UPLOAD_BASE_URL || 'https://coded-mbkz.onrender.com'}/Uploads/images/${req.file.filename}` });
+    res.json({ url: `${process.env.UPLOAD_BASE_URL || 'https://codedsignal.org'}/Uploads/images/${req.file.filename}` });
   } catch (error) {
     console.error('Image upload error:', error.message);
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -188,3 +188,4 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
