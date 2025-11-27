@@ -11,10 +11,10 @@ const User = require('./models/User');
 const Payment = require('./models/Payment');
 const auth = require('./middleware/auth');
 
-// Load environment variables
+// Load env
 dotenv.config();
 
-// Initialize Express app and server
+// App & Server
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -24,20 +24,23 @@ const io = socketIo(server, {
   },
 });
 
-// Configure MongoDB connection
+// MongoDB
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch((err) => console.error('❌ MongoDB error:', err));
 
-// Configure multer for file uploads with Render Disks
+// FIXED: Use Render writable dir + map to /Uploads URL
+const UPLOAD_BASE = process.env.UPLOAD_DIR || '/tmp/uploads'; // Render-safe
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'Uploads', file.fieldname === 'image' ? 'images' : 'paymentProofs');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+    const dir =
+      file.fieldname === 'image'
+        ? path.join(UPLOAD_BASE, 'images')
+        : path.join(UPLOAD_BASE, 'paymentProofs');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
     cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
@@ -54,19 +57,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Set COOP and COEP headers to allow Google Sign-In
+// FIXED: Only ONE correct COOP/COEP header (Google Sign-In + PWA safe)
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   next();
 });
 
-// Request logging middleware
+// Simple request logging
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
-  console.log('Files:', req.files);
   next();
 });
 
@@ -76,40 +76,32 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/chats', require('./routes/chats'));
 
-
-app.use((req, res, next) => {
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-    next();
-});
-
-// Payment proof upload route
+// Payment proof upload
 app.post('/api/payments/upload', auth, upload.single('proof'), async (req, res) => {
   try {
-    if (!req.file) {
-      console.error('No payment proof uploaded');
-      return res.status(400).json({ error: 'No payment proof uploaded' });
-    }
+    if (!req.file) return res.status(400).json({ error: 'No payment proof uploaded' });
+
     const { purpose, postId, amount } = req.body;
     if (!purpose || !['post_creation', 'post_extension', 'unlock_acceptances'].includes(purpose)) {
       return res.status(400).json({ error: 'Invalid or missing payment purpose' });
     }
     if ((purpose === 'post_creation' || purpose === 'post_extension') && !postId) {
-      return res.status(400).json({ error: 'Post ID required for post-related payments' });
+      return res.status(400).json({ error: 'Post ID required' });
     }
     if (postId && !mongoose.Types.ObjectId.isValid(postId)) {
       return res.status(400).json({ error: 'Invalid post ID' });
     }
+
     const payment = new Payment({
       user: req.user._id,
       post: postId || null,
       purpose,
-      proofPath: req.file.path.replace(__dirname, ''),
+      proofPath: req.file.path.replace('/tmp/uploads', '/Uploads'), // maps to public URL
       amount: parseFloat(amount) || 0,
-      reference: `PAYMENT-${Date.now()}`,
+      reference: `PAY-${Date.now()}`,
     });
     await payment.save();
-    console.log('Payment proof uploaded:', { filename: req.file.filename, purpose, postId });
+
     res.json({ message: 'Payment proof uploaded, pending verification', paymentId: payment._id });
   } catch (error) {
     console.error('Payment upload error:', error);
@@ -117,33 +109,31 @@ app.post('/api/payments/upload', auth, upload.single('proof'), async (req, res) 
   }
 });
 
-// User image upload route
+// Profile image upload
 app.post('/api/users/upload', auth, upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) {
-      console.error('No image uploaded');
-      return res.status(400).json({ error: 'No image file uploaded' });
-    }
-    console.log('Image uploaded:', { filename: req.file.filename, path: req.file.path });
-    res.json({ url: `${process.env.UPLOAD_BASE_URL || 'https://codedsignal.org'}/Uploads/images/${req.file.filename}` });
+    if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+
+    const imageUrl = `https://codedsignal.org/Uploads/images/${req.file.filename}`;
+    res.json({ url: imageUrl });
   } catch (error) {
-    console.error('Image upload error:', error.message);
+    console.error('Image upload error:', error);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
-// Serve static files
-app.use('/Uploads', express.static(process.env.UPLOAD_DIR || path.join(__dirname, 'Uploads')));
+// Serve uploaded files (mapped from /tmp/uploads → /Uploads)
+app.use('/Uploads', express.static(UPLOAD_BASE));
+
+// Serve frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html for root route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Catch-all route
+// Catch-all + 404
 app.use((req, res) => {
-  console.log(`[${new Date().toISOString()}] Catch-all triggered for: ${req.method} ${req.url}`);
   const filePath = path.join(__dirname, 'public', req.path);
   if (fs.existsSync(filePath) && !req.path.includes('..') && req.accepts('html')) {
     return res.sendFile(filePath);
@@ -151,49 +141,41 @@ app.use((req, res) => {
   if (req.accepts('html')) {
     return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
   }
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({ error: 'Not found' });
 });
 
-// Socket.IO
+// Socket.IO - Online users
 const onlineUsers = new Map();
+
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+  console.log('New socket connected:', socket.id);
 
   socket.on('user-connected', async (userId) => {
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) return;
     onlineUsers.set(userId, socket.id);
     await User.findByIdAndUpdate(userId, { isOnline: true });
-    console.log(`User ${userId} is online`);
     io.emit('user-status-update', { userId, isOnline: true });
   });
 
   socket.on('disconnect', async () => {
-    const userId = [...onlineUsers.entries()].find(([id, sId]) => sId === socket.id)?.[0];
+    const userId = [...onlineUsers.entries()].find(([id, sid]) => sid === socket.id)?.[0];
     if (userId) {
       onlineUsers.delete(userId);
       await User.findByIdAndUpdate(userId, { isOnline: false });
-      console.log(`User ${userId} is offline`);
       io.emit('user-status-update', { userId, isOnline: false });
     }
-    console.log('Client disconnected:', socket.id);
   });
 });
 
-// Error handler
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error('Server error:', {
-    message: err.message,
-    stack: err.stack,
-    method: req.method,
-    url: req.url,
-  });
-  res.status(500).json({ error: 'Something went wrong!', details: err.message });
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🌍 Live at https://codedsignal.org`);
 });
-
-
